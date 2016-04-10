@@ -1,4 +1,7 @@
 use std::cell::Cell;
+use std::cell::RefCell;
+use std::fmt;
+
 use geometry::Geometry as GeometryUncached;
 use renderer::geometry::Geometry;
 use appearance::Appearance;
@@ -10,7 +13,7 @@ pub struct GraphNode<'a> {
     pub state: State<'a>,
 
     pub geometry_uncached: GeometryUncached,
-    pub geometry: Geometry,
+    pub geometry: RefCell<Geometry>,
 
     // pub styles/appearance_uncached: StyleRules,
     pub appearance: Appearance,
@@ -20,6 +23,11 @@ pub struct GraphNode<'a> {
     pub type_id: usize,
 }
 
+impl<'a> fmt::Debug for GraphNode<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "GraphNode {{ type_id: {} }}", self.type_id)
+    }
+}
 // impl Default for GraphNode {
 //     fn default() -> GraphNode {
 //         GraphNode{

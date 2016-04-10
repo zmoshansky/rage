@@ -1,17 +1,17 @@
-#[derive(Default)]
-pub struct RelativePosition {
-    /// Uses DisplayPixel, should it just be a `Dimension`?
-    qty: f64,
-    unit: PositionUnit,
-}
+// #[derive(Default)]
+// pub struct RelativePosition {
+//     /// Uses DisplayPixel, should it just be a `Dimension`?
+//     qty: f64,
+//     unit: PositionUnit,
+// }
 
-enum PositionUnit {
-    /// Relative to parent
-    Parent,
-    /// Relative to viewport
-    Viewport,
-}
-impl Default for PositionUnit {fn default() -> PositionUnit { PositionUnit::Parent }}
+// enum PositionUnit {
+//     /// Relative to parent
+//     Parent,
+//     /// Relative to viewport
+//     Viewport,
+// }
+// impl Default for PositionUnit {fn default() -> PositionUnit { PositionUnit::Parent }}
 
 
 pub enum Position {
@@ -23,10 +23,15 @@ pub enum Position {
         // Z-TODO
         // z: Alignment,
     },
+    Absolute {
+        x: f64,
+        y: f64,
+        // z: f64,
+    },
     Relative {
-        x: RelativePosition,
-        y: RelativePosition,
-        z: RelativePosition,
+        x: f64,
+        y: f64,
+        // z: f64,
     }
 }
 impl Default for Position {fn default() -> Position { Position::Block }}
