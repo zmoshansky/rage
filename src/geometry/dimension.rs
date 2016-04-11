@@ -6,13 +6,6 @@ pub struct Dimensions {
     // pub z: Dimension,
 }
 
-// #[derive(Default)]
-// struct Dimension {
-//     qty: f64,
-//     unit: Dimension,
-// }
-
-// #[derive(PartialEq)]
 pub enum Dimension {
     /// px = dp * (dpi / 160)
     DisplayPixel(f64),

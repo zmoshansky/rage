@@ -1,19 +1,3 @@
-// #[derive(Default)]
-// pub struct RelativePosition {
-//     /// Uses DisplayPixel, should it just be a `Dimension`?
-//     qty: f64,
-//     unit: PositionUnit,
-// }
-
-// enum PositionUnit {
-//     /// Relative to parent
-//     Parent,
-//     /// Relative to viewport
-//     Viewport,
-// }
-// impl Default for PositionUnit {fn default() -> PositionUnit { PositionUnit::Parent }}
-
-
 pub enum Position {
     Block,
     Inline,

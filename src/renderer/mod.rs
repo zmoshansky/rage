@@ -4,12 +4,11 @@ pub mod geometry;
 pub mod appearance;
 
 use piston_window::{Context, G2d, Glyphs};
-use rose_tree::{RoseTree, petgraph};
+use rose_tree::{petgraph};
 use rose_tree;
-use graph_node::GraphNode;
+use tree::Tree;
 
-use widget::{Widget, State};
-use widget::button::{Button as WButton, Background};
+use widget::{Widget};
 
 pub struct Renderer<'a, 'b: 'a> {
     pub context: Context,
@@ -18,20 +17,16 @@ pub struct Renderer<'a, 'b: 'a> {
     // pub types: [Box<Widget>; 2],
 }
 
-pub fn render(renderer: Renderer, tree: RoseTree<GraphNode, u32>) {
-
+pub fn render(renderer: Renderer, ui_tree: &Tree) {
+    let dfs = petgraph::DfsIter::new(ui_tree.tree.graph(), petgraph::graph::NodeIndex::new(rose_tree::ROOT));
+    for node_index in dfs {
+        let node = &ui_tree.tree[node_index];
+        // TODO - Figure out how to do occlusion, proper rendering based on z-index.
+        // Must re-render every node higher than the dirty one...
+        node.dirty.set(true);
+        if node.dirty.get() {
+            ui_tree.types[node.type_id].render(Renderer{context: renderer.context, graphics: renderer.graphics, glyphs: renderer.glyphs}, &node.appearance, &node.geometry.borrow(), &node.state);
+            node.dirty.set(false);
+        }
+    }
 }
-// impl<'a, 'b: 'a> Renderer<'a, 'b> {
-//     pub fn render(&self, tree: RoseTree<GraphNode, u32>) {
-//         let dfs = petgraph::DfsIter::new(tree.graph(), rose_tree::petgraph::graph::NodeIndex::new(rose_tree::ROOT));
-//         for node_index in dfs {
-//             let node = tree.node_weight(node_index).unwrap();
-//             node.dirty.set(true);
-//             if node.dirty.get() {
-//                 self.types[node.type_id].render(self, &node.appearance, &node.geometry, &node.state);
-//                 // types[node.type_id].render(Renderer{context: c, graphics: g, glyphs: &mut glyph_cache}, &node.appearance, &node.geometry, &node.state);
-//                 node.dirty.set(false);
-//             }
-//         }
-//     }
-// }

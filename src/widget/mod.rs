@@ -1,7 +1,6 @@
 pub mod button;
 pub mod div;
 
-// use graph_node::GraphNode;
 use std::cell::Cell;
 use renderer::Renderer;
 use renderer::geometry::Geometry;

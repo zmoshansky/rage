@@ -2,10 +2,11 @@
 #[derive(Default, Debug)]
 pub struct Geometry {
     pub position: Xyz,
+    // Inner content dimensions
     pub dimensions: Xyz,
-    // TODO - Unsure if this is really necessary or if layout should have dealt with any needs for this...
-    // margins: Spacing,
-    // padding: Spacing,
+    // TODO - Border
+    pub margin: Spacing,
+    pub padding: Spacing,
 }
 
 impl Geometry {
@@ -33,8 +34,8 @@ impl Default for Xyz {
     }
 }
 
-#[derive(Default)]
-struct Spacing {
+#[derive(Default, Debug)]
+pub struct Spacing {
     pub top: f64,
     pub bottom: f64,
     pub right: f64,
