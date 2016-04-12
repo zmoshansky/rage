@@ -10,7 +10,7 @@ use piston_window::{PistonWindow, WindowSettings, Glyphs};
 use piston::input::*;
 
 mod graph_node;
-mod tree;
+mod scene_graph;
 mod widget;
 mod renderer;
 mod appearance;
@@ -24,7 +24,7 @@ use widget::State;
 use widget::div::Div;
 use widget::button::{Button as WButton, Background};
 
-use tree::Tree;
+use scene_graph::SceneGraph;
 use layout::Cartographer;
 use collision::CollisionArgs;
 
@@ -53,12 +53,12 @@ fn main() {
     let mut cursor = Xy::default();
     let mut window_size = Xy{x: WIDTH as f64, y: HEIGHT as f64};
 
-    let (mut ui_tree, root) = Tree::new(GraphNode{id: Cell::new(0), type_id: 0, dirty: Cell::new(true), ..Default::default()});
-    ui_tree.types.push(Box::new(Background));
-    ui_tree.types.push(Box::new(WButton));
-    ui_tree.types.push(Box::new(Div));
+    let (mut scene_graph, root) = SceneGraph::new(GraphNode{id: Cell::new(0), type_id: 0, dirty: Cell::new(true), ..Default::default()});
+    scene_graph.types.push(Box::new(Background));
+    scene_graph.types.push(Box::new(WButton));
+    scene_graph.types.push(Box::new(Div));
 
-    let a = ui_tree.add_child(root, GraphNode{
+    let a = scene_graph.add_child(root, GraphNode{
         type_id: 2,
         geometry_uncached: GeometryUncached{
             dimensions: Dimensions{x: Dimension::Percent(1.0), y: Dimension::DisplayPixel(100.0)},
@@ -67,7 +67,7 @@ fn main() {
         ..Default::default()
     });
 
-    ui_tree.add_child(a, GraphNode{
+    scene_graph.add_child(a, GraphNode{
         state: State{text: "A`y", ..Default::default()},
         type_id: 1,
         geometry_uncached: GeometryUncached{
@@ -77,7 +77,7 @@ fn main() {
         ..Default::default()
     });
 
-    ui_tree.add_child(a, GraphNode{
+    scene_graph.add_child(a, GraphNode{
         type_id: 2,
         geometry_uncached: GeometryUncached{
             dimensions: Dimensions{x: Dimension::Grid(1.0), y: Dimension::DisplayPixel(400.0)},
@@ -86,7 +86,7 @@ fn main() {
         ..Default::default()
     });
 
-    ui_tree.add_child(a, GraphNode{
+    scene_graph.add_child(a, GraphNode{
         state: State{text: "B", ..Default::default()},
         type_id: 1,
         geometry_uncached: GeometryUncached{
@@ -96,7 +96,7 @@ fn main() {
         ..Default::default()
     });
 
-    ui_tree.add_child(a, GraphNode{
+    scene_graph.add_child(a, GraphNode{
         type_id: 2,
         geometry_uncached: GeometryUncached{
             dimensions: Dimensions{x: Dimension::Grid(1.0), y: Dimension::Viewport(1.0), ..Default::default()},
@@ -114,9 +114,9 @@ fn main() {
         };
         // if let Some(button) = e.release_args() {
         //     if button == Button::Mouse(MouseButton::Left) {
-        //         let dfs = rose_tree::petgraph::DfsIter::new(ui_tree.tree.borrow().graph(), root);
+        //         let dfs = rose_tree::petgraph::DfsIter::new(scene_graph.tree.borrow().graph(), root);
         //         for node_index in dfs {
-        //             let node = ui_tree.tree.borrow().node_weight(node_index).unwrap();
+        //             let node = scene_graph.tree.borrow().node_weight(node_index).unwrap();
         //             if node.geometry.borrow().contained(cursor) {
         //                 if node.type_id != 0 && !node.state.hover.get() {
         //                     node.state.hover.set(true);
@@ -138,8 +138,8 @@ fn main() {
         e.mouse_cursor(|x, y| {
             cursor.x = x;
             cursor.y = y;
-            collision::collision(CollisionArgs{cursor: &cursor}, &ui_tree);
-            // let mut tree = ui_tree.tree.borrow();
+            collision::collision(CollisionArgs{cursor: &cursor}, &scene_graph);
+            // let mut tree = scene_graph.tree.borrow();
             // let dfs = rose_tree::petgraph::DfsIter::new(tree.graph(), root);
             // for node_index in dfs {
             //     let node = tree.node_weight_mut(node_index).unwrap();
@@ -160,7 +160,7 @@ fn main() {
         e.text(|text| println!("Typed '{}'", text));
         e.resize(|w, h| {
             window_size = Xy{x: w as f64, y: h as f64};
-            layout::layout(&Cartographer{window: &window_size, dpi: &Xy{x:96.0, y: 96.0}}, &ui_tree.tree.borrow(), root);
+            layout::layout(&Cartographer{window: &window_size, dpi: &Xy{x:96.0, y: 96.0}}, &scene_graph.tree.borrow(), root);
             println!("Resized '{}, {}'", w, h)
         });
         if let Some(focused) = e.focus_args() {
@@ -172,7 +172,7 @@ fn main() {
         //     println!("Update");
         // });
         e.draw_2d(|c, g| {
-            renderer::render(Renderer{context: c, graphics: g, glyphs: &mut glyph_cache}, &ui_tree);
+            renderer::render(Renderer{context: c, graphics: g, glyphs: &mut glyph_cache}, &scene_graph);
         });
 
         // Not yielding events

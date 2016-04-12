@@ -5,7 +5,7 @@ pub mod appearance;
 
 use piston_window::{Context, G2d, Glyphs};
 use rose_tree::{ROOT, petgraph};
-use tree::Tree;
+use scene_graph::SceneGraph;
 
 use widget::{Widget};
 
@@ -16,8 +16,8 @@ pub struct Renderer<'a, 'b: 'a> {
     // pub types: [Box<Widget>; 2],
 }
 
-pub fn render(renderer: Renderer, ui_tree: &Tree) {
-    let tree = ui_tree.tree.borrow();
+pub fn render(renderer: Renderer, scene_graph: &SceneGraph) {
+    let tree = scene_graph.tree.borrow();
     let dfs = petgraph::DfsIter::new(tree.graph(), petgraph::graph::NodeIndex::new(ROOT));
     for node_index in dfs {
         let node = &tree[node_index];
@@ -25,7 +25,7 @@ pub fn render(renderer: Renderer, ui_tree: &Tree) {
         // Must re-render every node higher than the dirty one...
         node.dirty.set(true);
         if node.dirty.get() {
-            ui_tree.types[node.type_id].render(Renderer{context: renderer.context, graphics: renderer.graphics, glyphs: renderer.glyphs}, &node.appearance, &node.geometry.borrow(), &node.state);
+            scene_graph.types[node.type_id].render(Renderer{context: renderer.context, graphics: renderer.graphics, glyphs: renderer.glyphs}, &node.appearance, &node.geometry.borrow(), &node.state);
             node.dirty.set(false);
         }
     }

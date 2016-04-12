@@ -1,4 +1,4 @@
-use tree::Tree;
+use scene_graph::SceneGraph;
 use rose_tree::{ROOT, petgraph};
 use renderer::geometry::{Xy, Geometry};
 
@@ -10,8 +10,8 @@ pub struct CollisionArgs<'a> {
 // On mouse button down - All hover nodes set to down.
 // On mouse release - All [down|drag] nodes emit event.
 // Assumes mouse move always happens before press/release.
-pub fn collision(args: CollisionArgs, ui_tree: &Tree) {
-    let mut tree = ui_tree.tree.borrow_mut();
+pub fn collision(args: CollisionArgs, scene_graph: &SceneGraph) {
+    let mut tree = scene_graph.tree.borrow_mut();
     let graph = tree.graph_mut();
 
     // OPTIMIZATION - Store a List of absolutely positioned nodes, then collision only need check those and do a DFS, skipping branches as soon as a `node.is_hover() == false`
