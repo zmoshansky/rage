@@ -16,21 +16,23 @@ mod renderer;
 mod appearance;
 mod geometry;
 mod layout;
+mod collision;
 // mod test_fixture;
 
 use graph_node::GraphNode;
-use widget::{Widget, State};
+use widget::State;
 use widget::div::Div;
 use widget::button::{Button as WButton, Background};
 
 use tree::Tree;
 use layout::Cartographer;
+use collision::CollisionArgs;
 
 use geometry::dimension::{Dimensions, Dimension};
 use geometry::Geometry as GeometryUncached;
 
 use renderer::Renderer;
-use renderer::geometry::{Geometry, Xy, Xyz};
+use renderer::geometry::Xy;
 
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 600;
@@ -48,7 +50,7 @@ fn main() {
     let mut glyph_cache = Glyphs::new(&font_path, window.factory.borrow().clone()).unwrap();
 
     // Capture mouse coordinates
-    let mut cursor = [0.0, 0.0];
+    let mut cursor = Xy::default();
     let mut window_size = Xy{x: WIDTH as f64, y: HEIGHT as f64};
 
     let (mut ui_tree, root) = Tree::new(GraphNode{id: Cell::new(0), type_id: 0, dirty: Cell::new(true), ..Default::default()});
@@ -110,52 +112,55 @@ fn main() {
                 println!("Pressed mouse button '{:?}'", button);
             }
         };
-        if let Some(button) = e.release_args() {
-            if button == Button::Mouse(MouseButton::Left) {
-                let dfs = rose_tree::petgraph::DfsIter::new(ui_tree.tree.graph(), root);
-                for node_index in dfs {
-                    let node = ui_tree.tree.node_weight(node_index).unwrap();
-                    if node.geometry.borrow().contained(cursor) {
-                        if node.type_id != 0 && !node.state.hover.get() {
-                            node.state.hover.set(true);
-                            node.dirty.set(true);
-                        }
+        // if let Some(button) = e.release_args() {
+        //     if button == Button::Mouse(MouseButton::Left) {
+        //         let dfs = rose_tree::petgraph::DfsIter::new(ui_tree.tree.borrow().graph(), root);
+        //         for node_index in dfs {
+        //             let node = ui_tree.tree.borrow().node_weight(node_index).unwrap();
+        //             if node.geometry.borrow().contained(cursor) {
+        //                 if node.type_id != 0 && !node.state.hover.get() {
+        //                     node.state.hover.set(true);
+        //                     node.dirty.set(true);
+        //                 }
 
-                        println!("Tapped {:?} {:?}", node, cursor);
-                    } else {
-                        if node.state.hover.get() {
-                            node.state.hover.set(false);
-                            node.dirty.set(true);
-                        }
-                    }
-                }
-                // println!("Released mouse button '{:?}'", button);
-            }
-        };
+        //                 println!("Tapped {:?} {:?}", node, cursor);
+        //             } else {
+        //                 if node.state.hover.get() {
+        //                     node.state.hover.set(false);
+        //                     node.dirty.set(true);
+        //                 }
+        //             }
+        //         }
+        //         // println!("Released mouse button '{:?}'", button);
+        //     }
+        // };
 
         e.mouse_cursor(|x, y| {
-            cursor = [x, y];
-            let dfs = rose_tree::petgraph::DfsIter::new(ui_tree.tree.graph(), root);
-            for node_index in dfs {
-                let node = ui_tree.tree.node_weight(node_index).unwrap();
-                if node.geometry.borrow().contained(cursor) {
-                    if node.type_id != 0 && !node.state.hover.get() {
-                        node.state.hover.set(true);
-                        node.dirty.set(true);
-                    }
-                } else {
-                    if node.state.hover.get() {
-                        node.state.hover.set(false);
-                        node.dirty.set(true);
-                    }
-                }
-            }
+            cursor.x = x;
+            cursor.y = y;
+            collision::collision(CollisionArgs{cursor: &cursor}, &ui_tree);
+            // let mut tree = ui_tree.tree.borrow();
+            // let dfs = rose_tree::petgraph::DfsIter::new(tree.graph(), root);
+            // for node_index in dfs {
+            //     let node = tree.node_weight_mut(node_index).unwrap();
+            //     if node.geometry.borrow().contained(cursor) {
+            //         if node.type_id != 0 && !node.state.hover.get() {
+            //             node.state.hover.set(true);
+            //             node.dirty.set(true);
+            //         }
+            //     } else {
+            //         if node.state.hover.get() {
+            //             node.state.hover.set(false);
+            //             node.dirty.set(true);
+            //         }
+            //     }
+            // }
         });
         e.mouse_scroll(|dx, dy| println!("Scrolled mouse '{}, {}'", dx, dy));
         e.text(|text| println!("Typed '{}'", text));
         e.resize(|w, h| {
             window_size = Xy{x: w as f64, y: h as f64};
-            layout::layout(&Cartographer{window: &window_size, dpi: &Xy{x:96.0, y: 96.0}}, &ui_tree.tree, root);
+            layout::layout(&Cartographer{window: &window_size, dpi: &Xy{x:96.0, y: 96.0}}, &ui_tree.tree.borrow(), root);
             println!("Resized '{}, {}'", w, h)
         });
         if let Some(focused) = e.focus_args() {

@@ -8,4 +8,7 @@ description = "Rust Advanced GUI Extravaganza"
 piston_window = "0.40.0"
 piston = "0.19.0"
 piston2d-graphics = "0.16.0"
-rose_tree = "0.1.1"
+# rose_tree = "0.1.1"
+
+[dependencies.rose_tree]
+path = "src/deps/rose_tree"

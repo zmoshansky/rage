@@ -111,8 +111,9 @@ pub fn layout(cartographer: &Cartographer, tree: &rose_tree::RoseTree<GraphNode>
         layout(cartographer, tree, nx);
     }
 }
-
+/// Uses W3C Content-Box by default
 fn bounding_box(node: &GraphNode) -> Xy {
+    // TODO - Account for alternate bounding models - http://www.binvisions.com/articles/box-sizing-property-difference-content-border/
     let geometry = node.geometry.borrow();
     Xy{
         x: geometry.margin.left + geometry.margin.right + geometry.padding.left + geometry.padding.right + geometry.dimensions.x,
