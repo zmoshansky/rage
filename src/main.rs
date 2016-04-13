@@ -2,12 +2,14 @@ extern crate piston_window;
 extern crate piston;
 extern crate graphics;
 extern crate rose_tree;
+extern crate sdl2_window;
+
 use std::path::Path;
-use std::cell::Cell;
 
 // use piston_window::*;
 use piston_window::{PistonWindow, WindowSettings, Glyphs};
 use piston::input::*;
+use sdl2_window::Sdl2Window;
 
 mod graph_node;
 mod scene_graph;
@@ -38,7 +40,8 @@ const WIDTH: u32 = 800;
 const HEIGHT: u32 = 600;
 
 fn main() {
-    let window: PistonWindow =
+    // let window: PistonWindow =
+    let window: PistonWindow<(), Sdl2Window> =
         WindowSettings::new("Rage", [WIDTH, HEIGHT])
         .exit_on_esc(true).build().unwrap();
 
@@ -53,7 +56,7 @@ fn main() {
     let mut cursor = Xy::default();
     let mut window_size = Xy{x: WIDTH as f64, y: HEIGHT as f64};
 
-    let (mut scene_graph, root) = SceneGraph::new(GraphNode{id: Cell::new(0), type_id: 0, dirty: Cell::new(true), ..Default::default()});
+    let (mut scene_graph, root) = SceneGraph::new();
     scene_graph.types.push(Box::new(Background));
     scene_graph.types.push(Box::new(WButton));
     scene_graph.types.push(Box::new(Div));
@@ -71,7 +74,7 @@ fn main() {
         state: State{text: "A`y", ..Default::default()},
         type_id: 1,
         geometry_uncached: GeometryUncached{
-            dimensions: Dimensions{x: Dimension::Grid(1.0), y: Dimension::DisplayPixel(400.0)},
+            dimensions: Dimensions{x: Dimension::Grid(1.0), y: Dimension::DisplayPixel(20.0)},
             ..Default::default()
         },
         ..Default::default()
@@ -90,7 +93,7 @@ fn main() {
         state: State{text: "B", ..Default::default()},
         type_id: 1,
         geometry_uncached: GeometryUncached{
-            dimensions: Dimensions{x: Dimension::Grid(1.0), y: Dimension::DisplayPixel(400.0), ..Default::default()},
+            dimensions: Dimensions{x: Dimension::Grid(1.0), y: Dimension::DisplayPixel(20.0), ..Default::default()},
             ..Default::default()
         },
         ..Default::default()
@@ -105,67 +108,55 @@ fn main() {
         ..Default::default()
     });
 
+    // SDL2 Window doesn't resize on start, but this event does happen
+    layout::layout(&Cartographer{window: &window_size, dpi: &Xy{x:96.0, y: 96.0}}, &scene_graph, root);
+
     for e in window {
 
         if let Some(button) = e.press_args() {
             if button == Button::Mouse(MouseButton::Left) {
-                println!("Pressed mouse button '{:?}'", button);
+                collision::press(&scene_graph);
             }
         };
-        // if let Some(button) = e.release_args() {
-        //     if button == Button::Mouse(MouseButton::Left) {
-        //         let dfs = rose_tree::petgraph::DfsIter::new(scene_graph.tree.borrow().graph(), root);
-        //         for node_index in dfs {
-        //             let node = scene_graph.tree.borrow().node_weight(node_index).unwrap();
-        //             if node.geometry.borrow().contained(cursor) {
-        //                 if node.type_id != 0 && !node.state.hover.get() {
-        //                     node.state.hover.set(true);
-        //                     node.dirty.set(true);
-        //                 }
+        if let Some(button) = e.release_args() {
+            if button == Button::Mouse(MouseButton::Left) {
+                collision::release(&CollisionArgs{cursor: &cursor}, &scene_graph);
+            }
+        };
 
-        //                 println!("Tapped {:?} {:?}", node, cursor);
-        //             } else {
-        //                 if node.state.hover.get() {
-        //                     node.state.hover.set(false);
-        //                     node.dirty.set(true);
-        //                 }
-        //             }
-        //         }
-        //         // println!("Released mouse button '{:?}'", button);
-        //     }
-        // };
-
+        // Stops getting updates when mouse leaves window frame, unless mouse button down
         e.mouse_cursor(|x, y| {
             cursor.x = x;
             cursor.y = y;
-            collision::collision(CollisionArgs{cursor: &cursor}, &scene_graph);
-            // let mut tree = scene_graph.tree.borrow();
-            // let dfs = rose_tree::petgraph::DfsIter::new(tree.graph(), root);
-            // for node_index in dfs {
-            //     let node = tree.node_weight_mut(node_index).unwrap();
-            //     if node.geometry.borrow().contained(cursor) {
-            //         if node.type_id != 0 && !node.state.hover.get() {
-            //             node.state.hover.set(true);
-            //             node.dirty.set(true);
-            //         }
-            //     } else {
-            //         if node.state.hover.get() {
-            //             node.state.hover.set(false);
-            //             node.dirty.set(true);
-            //         }
-            //     }
-            // }
+            collision::collision(&CollisionArgs{cursor: &cursor}, &scene_graph);
         });
+
+        // Only occurs if mouse button down while leaving window frame... HoverState::Drag.
+        // Only works properly in SDL2
+        if let Some(cursor) = e.cursor_args() {
+            if cursor {
+                println!("Mouse entered");
+            }
+            else { println!("Mouse left"); }
+        };
+
         e.mouse_scroll(|dx, dy| println!("Scrolled mouse '{}, {}'", dx, dy));
         e.text(|text| println!("Typed '{}'", text));
         e.resize(|w, h| {
             window_size = Xy{x: w as f64, y: h as f64};
-            layout::layout(&Cartographer{window: &window_size, dpi: &Xy{x:96.0, y: 96.0}}, &scene_graph.tree.borrow(), root);
+            layout::layout(&Cartographer{window: &window_size, dpi: &Xy{x:96.0, y: 96.0}}, &scene_graph, root);
             println!("Resized '{}, {}'", w, h)
         });
+
+        // Focus is gained/lost consecutively if alt-tab is used.
         if let Some(focused) = e.focus_args() {
-            if focused { println!("Gained focus"); }
-            else { println!("Lost focus"); }
+            if focused {
+                println!("Gained focus");
+            }
+            else {
+                // TODO - Set all hover states to HOVER::Up
+                println!("Lost focus");
+            }
         };
 
         // e.update(|_| {
@@ -175,12 +166,7 @@ fn main() {
             renderer::render(Renderer{context: c, graphics: g, glyphs: &mut glyph_cache}, &scene_graph);
         });
 
-        // Not yielding events
-        e.mouse_relative(|dx, dy| println!("Relative mouse moved '{} {}'", dx, dy));
-        if let Some(cursor) = e.cursor_args() {
-            if cursor { println!("Mouse entered"); }
-            else { println!("Mouse leaved"); }
-        };
-
+        // Only works with SDL2 Window
+        // e.mouse_relative(|dx, dy| println!("Relative mouse moved '{} {}'", dx, dy));
     }
 }

@@ -2,6 +2,7 @@ use rose_tree::{RoseTree, NodeIndex};
 use widget::Widget;
 use graph_node::GraphNode;
 use std::cell::RefCell;
+use std::cell::Cell;
 
 // #[derive(Default)]
 pub struct SceneGraph<'a> {
@@ -14,9 +15,9 @@ pub struct SceneGraph<'a> {
 }
 
 impl<'a> SceneGraph<'a> {
-    pub fn new(root: GraphNode<'a>) -> (Self, NodeIndex) {
-        let (tree, root) = RoseTree::<GraphNode, u32>::new(root);
-        (SceneGraph{types: Vec::new(), tree:  RefCell::new(tree), id_counter: 0}, root)
+    pub fn new() -> (Self, NodeIndex) {
+        let (tree, root) = RoseTree::<GraphNode, u32>::new(GraphNode{id: Cell::new(0), type_id: 0, dirty: Cell::new(true), ..Default::default()});
+        (SceneGraph{types: Vec::new(), tree:  RefCell::new(tree), id_counter: 1}, root)
     }
     pub fn add_child(&mut self, root: NodeIndex, node: GraphNode<'a>) -> NodeIndex {
         node.id.set(self.id_counter);

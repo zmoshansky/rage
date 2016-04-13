@@ -1,8 +1,8 @@
-extern crate rose_tree;
-
 use geometry::dimension::{Dimension};
 // use geometry::Geometry as GeometryUncached;
 use graph_node::GraphNode;
+use scene_graph::SceneGraph;
+use rose_tree::{ROOT, NodeIndex};
 
 use renderer::geometry::{Xy};
 
@@ -35,14 +35,15 @@ pub struct Cartographer<'a> {
 // TODO - Standardize geometry to account for padding/margins
 
 /// Layout all of root's children
-pub fn layout(cartographer: &Cartographer, tree: &rose_tree::RoseTree<GraphNode>, root: rose_tree::NodeIndex) {
+pub fn layout(cartographer: &Cartographer, scene_graph: &SceneGraph, root: NodeIndex) {
     // BFS = FIFO Queue, DFS = Stack
     // BFS from pet_graph doesn't work since we need to know when we're done traversing a level.
+    let tree = scene_graph.tree.borrow();
 
     // Special case to layout tree's root
     let parent: &GraphNode = &tree[root];
     // TODO - Move special case to graph creation
-    if root.index() == rose_tree::ROOT {
+    if root.index() == ROOT {
         set_dimension_x(parent, compute_viewport_x(&cartographer, 1.0));
         set_dimension_y(parent, compute_viewport_y(&cartographer, 1.0));
         set_position_x(parent, 0.0);
@@ -51,7 +52,7 @@ pub fn layout(cartographer: &Cartographer, tree: &rose_tree::RoseTree<GraphNode>
 
     let mut bfs = tree.walk_children(root);
     let mut child_indices = Vec::new();
-    while let Some(nx) = bfs.next(tree) {
+    while let Some(nx) = bfs.next(&tree) {
         child_indices.push(nx);
     }
     child_indices.reverse();
@@ -108,7 +109,7 @@ pub fn layout(cartographer: &Cartographer, tree: &rose_tree::RoseTree<GraphNode>
     for nx in child_indices.clone() {
         set_position(&tree[nx], &mut position);
         println!("layout::layout {:?} {:?} {}", tree[nx], tree[nx].geometry.borrow(), nx.index());
-        layout(cartographer, tree, nx);
+        layout(cartographer, scene_graph, nx);
     }
 }
 /// Uses W3C Content-Box by default

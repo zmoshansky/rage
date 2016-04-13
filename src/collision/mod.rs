@@ -10,19 +10,24 @@ pub struct CollisionArgs<'a> {
 // On mouse button down - All hover nodes set to down.
 // On mouse release - All [down|drag] nodes emit event.
 // Assumes mouse move always happens before press/release.
-pub fn collision(args: CollisionArgs, scene_graph: &SceneGraph) {
+pub fn collision(args: &CollisionArgs, scene_graph: &SceneGraph) {
     let mut tree = scene_graph.tree.borrow_mut();
-    let graph = tree.graph_mut();
+    // let graph = tree.graph_mut();
+
+    let mut dfs = petgraph::Dfs::new(tree.graph(), petgraph::graph::NodeIndex::new(ROOT));
+    while let Some(node_index) = dfs.next(tree.graph()) {
+    // let node = &mut tree[node_index];
+    let node = &mut tree[node_index];
 
     // OPTIMIZATION - Store a List of absolutely positioned nodes, then collision only need check those and do a DFS, skipping branches as soon as a `node.is_hover() == false`
-    // OPTIMIZATION - Maintain a list `WeakRef<Nodes>` of `hover_state != HoverState::Up` for press and drag events.
-    let mut dfs = petgraph::Dfs::new(graph, petgraph::graph::NodeIndex::new(ROOT));
-    while let Some(node_index) = dfs.next(graph) {
-        let node = graph.node_weight_mut(node_index).unwrap();
-        if hovering(&node.geometry.borrow(), &args.cursor) {
+    // OPTIMIZATION - `scene_graph.hovering: WeakRef<Nodes>` of `hover_state != HoverState::Up` for press and drag events.
+    // let mut dfs = petgraph::Dfs::new(graph, petgraph::graph::NodeIndex::new(ROOT));
+    // while let Some(node_index) = dfs.next(graph) {
+        if hovering(&node.geometry.borrow(), args.cursor) && node.id.get() != 0 {
             if let HoverState::Up = node.state.hover_state {
                 node.state.hover_state = HoverState::Hover;
                 node.dirty.set(true);
+                println!("Hovered {:?}", node);
             }
         } else {
             match node.state.hover_state {
@@ -36,6 +41,52 @@ pub fn collision(args: CollisionArgs, scene_graph: &SceneGraph) {
                 }
                 _ => {}
             }
+        }
+    }
+}
+
+/// On press - All `HoverState::Hover` nodes set to down.
+pub fn press(scene_graph: &SceneGraph) {
+    let mut tree = scene_graph.tree.borrow_mut();
+
+    // OPTIMIZATION - `scene_graph.hovering: WeakRef<Nodes>` of `hover_state != HoverState::Up` for press and drag events.
+    let mut dfs = petgraph::Dfs::new(tree.graph(), petgraph::graph::NodeIndex::new(ROOT));
+    while let Some(node_index) = dfs.next(tree.graph()) {
+        let node = &mut tree[node_index];
+
+        if let HoverState::Hover = node.state.hover_state {
+            node.state.hover_state = HoverState::Down;
+            node.dirty.set(true);
+        }
+    }
+}
+
+/// On press - All `HoverState::Hover` nodes set to down.
+pub fn release(args: &CollisionArgs, scene_graph: &SceneGraph) {
+    let mut tree = scene_graph.tree.borrow_mut();
+
+    // OPTIMIZATION - `scene_graph.hovering: WeakRef<Nodes>` of `hover_state != HoverState::Up` for press and drag events.
+    let mut dfs = petgraph::Dfs::new(tree.graph(), petgraph::graph::NodeIndex::new(ROOT));
+    while let Some(node_index) = dfs.next(tree.graph()) {
+        let node = &mut tree[node_index];
+
+        match node.state.hover_state {
+            HoverState::Down => {
+                node.state.hover_state = HoverState::Hover;
+                node.dirty.set(true);
+                println!("Tapped {:?}", node);
+            }
+            HoverState::Drag => {
+                if hovering(&node.geometry.borrow(), args.cursor) {
+                    node.state.hover_state = HoverState::Hover;
+                }
+                else {
+                    node.state.hover_state = HoverState::Up;
+                }
+                node.dirty.set(true);
+                println!("Dragged {:?}", node);
+            }
+            _ => {}
         }
     }
 }
