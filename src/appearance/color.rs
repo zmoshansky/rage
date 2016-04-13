@@ -1,8 +1,3 @@
-/// RGBA, CMYK?
-/// Depends on renderer, should convert to whatever it uses.
-pub struct Color {
-  r: u32,
-  g: u32,
-  b: u32,
-  a: u32,
-}
+pub use graphics::types::Color;
+pub use graphics::color::*;
+// https://www.google.com/design/spec/style/color.html#color-color-palette

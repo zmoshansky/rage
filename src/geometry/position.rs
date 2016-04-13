@@ -1,3 +1,4 @@
+#[derive(Clone)]
 pub enum Position {
     Block,
     Inline,
@@ -20,6 +21,7 @@ pub enum Position {
 }
 impl Default for Position {fn default() -> Position { Position::Block }}
 
+#[derive(Clone)]
 pub enum Alignment {
     Start,
     Center,

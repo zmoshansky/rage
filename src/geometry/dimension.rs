@@ -1,4 +1,4 @@
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Dimensions {
     pub x: Dimension,
     pub y: Dimension,
@@ -6,6 +6,7 @@ pub struct Dimensions {
     // pub z: Dimension,
 }
 
+#[derive(Clone)]
 pub enum Dimension {
     /// px = dp * (dpi / 160)
     DisplayPixel(f64),

@@ -1,4 +1,5 @@
-#[derive(Default)]
+// TODO - Values should be of dimension type, otherwise, just use renderer::geometry
+#[derive(Default, Clone)]
 pub struct Spacing {
     pub top: f64,
     pub bottom: f64,

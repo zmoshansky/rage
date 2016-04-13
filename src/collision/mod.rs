@@ -23,7 +23,7 @@ pub fn collision(args: &CollisionArgs, scene_graph: &SceneGraph) {
     // OPTIMIZATION - `scene_graph.hovering: WeakRef<Nodes>` of `hover_state != HoverState::Up` for press and drag events.
     // let mut dfs = petgraph::Dfs::new(graph, petgraph::graph::NodeIndex::new(ROOT));
     // while let Some(node_index) = dfs.next(graph) {
-        if hovering(&node.geometry.borrow(), args.cursor) && node.id.get() != 0 {
+        if hovering(&node.geometry.borrow(), args.cursor) && node.id != 0 {
             if let HoverState::Up = node.state.hover_state {
                 node.state.hover_state = HoverState::Hover;
                 node.dirty.set(true);
@@ -100,7 +100,12 @@ fn hovering(geometry: &Geometry, cursor: &Xy) -> bool {
     geometry.position.y <= cursor.y && geometry.position.y + geometry.dimensions.y >= cursor.y
 }
 
-#[derive(Debug, PartialEq)]
+/// TODO - Clean up
+pub fn over(state: &HoverState) -> bool {
+    *state == HoverState::Hover || *state == HoverState::Down
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum HoverState {
     Up,
     Hover,

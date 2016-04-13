@@ -1,16 +1,14 @@
 pub mod button;
 pub mod div;
 
-use std::cell::Cell;
 use renderer::Renderer;
 use renderer::geometry::Geometry;
 use appearance::Appearance;
 use collision::HoverState;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct State<'a> {
     pub text: &'a str,
-    pub hover: Cell<bool>,
     pub hover_state: HoverState,
 }
 

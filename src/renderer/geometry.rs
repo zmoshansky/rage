@@ -1,5 +1,5 @@
 /// This is what the layout engine produces when it's finished.
-#[derive(Default, Debug)]
+#[derive(Default, Clone, Debug)]
 pub struct Geometry {
     pub position: Xyz,
     // Inner content dimensions
@@ -17,7 +17,7 @@ impl Geometry {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Xyz {
     pub x: f64,
     pub y: f64,
@@ -34,7 +34,7 @@ impl Default for Xyz {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Clone, Debug)]
 pub struct Spacing {
     pub top: f64,
     pub bottom: f64,

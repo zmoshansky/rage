@@ -16,7 +16,7 @@ use geometry::overflow::Overflows;
 use geometry::layout::Layouts;
 use geometry::spacing::Spacing;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Geometry {
     pub overflows: Overflows,
     pub dimensions: Dimensions,

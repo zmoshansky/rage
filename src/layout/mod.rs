@@ -34,6 +34,9 @@ pub struct Cartographer<'a> {
 // TODO - Special case for wrap... Probably need to return width/height of nodes
 // TODO - Standardize geometry to account for padding/margins
 
+pub fn layout_root(cartographer: &Cartographer, scene_graph: &SceneGraph) {
+    layout(cartographer, scene_graph, NodeIndex::new(ROOT));
+}
 /// Layout all of root's children
 pub fn layout(cartographer: &Cartographer, scene_graph: &SceneGraph, root: NodeIndex) {
     // BFS = FIFO Queue, DFS = Stack
@@ -112,6 +115,7 @@ pub fn layout(cartographer: &Cartographer, scene_graph: &SceneGraph, root: NodeI
         layout(cartographer, scene_graph, nx);
     }
 }
+
 /// Uses W3C Content-Box by default
 fn bounding_box(node: &GraphNode) -> Xy {
     // TODO - Account for alternate bounding models - http://www.binvisions.com/articles/box-sizing-property-difference-content-border/

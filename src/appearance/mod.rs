@@ -8,7 +8,7 @@ pub mod color;
 use appearance::font::Font;
 use appearance::background::Background;
 
-// #[derive(Default)]
+#[derive(Clone)]
 pub struct Appearance {
     pub opacity: f64,
     // pub border_rounding: f64

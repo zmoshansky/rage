@@ -6,7 +6,6 @@ extern crate sdl2_window;
 
 use std::path::Path;
 
-// use piston_window::*;
 use piston_window::{PistonWindow, WindowSettings, Glyphs};
 use piston::input::*;
 use sdl2_window::Sdl2Window;
@@ -19,19 +18,11 @@ mod appearance;
 mod geometry;
 mod layout;
 mod collision;
-// mod test_fixture;
-
-use graph_node::GraphNode;
-use widget::State;
-use widget::div::Div;
-use widget::button::{Button as WButton, Background};
+mod test_fixture;
 
 use scene_graph::SceneGraph;
 use layout::Cartographer;
 use collision::CollisionArgs;
-
-use geometry::dimension::{Dimensions, Dimension};
-use geometry::Geometry as GeometryUncached;
 
 use renderer::Renderer;
 use renderer::geometry::Xy;
@@ -56,60 +47,11 @@ fn main() {
     let mut cursor = Xy::default();
     let mut window_size = Xy{x: WIDTH as f64, y: HEIGHT as f64};
 
-    let (mut scene_graph, root) = SceneGraph::new();
-    scene_graph.types.push(Box::new(Background));
-    scene_graph.types.push(Box::new(WButton));
-    scene_graph.types.push(Box::new(Div));
-
-    let a = scene_graph.add_child(root, GraphNode{
-        type_id: 2,
-        geometry_uncached: GeometryUncached{
-            dimensions: Dimensions{x: Dimension::Percent(1.0), y: Dimension::DisplayPixel(100.0)},
-            ..Default::default()
-        },
-        ..Default::default()
-    });
-
-    scene_graph.add_child(a, GraphNode{
-        state: State{text: "A`y", ..Default::default()},
-        type_id: 1,
-        geometry_uncached: GeometryUncached{
-            dimensions: Dimensions{x: Dimension::Grid(1.0), y: Dimension::DisplayPixel(20.0)},
-            ..Default::default()
-        },
-        ..Default::default()
-    });
-
-    scene_graph.add_child(a, GraphNode{
-        type_id: 2,
-        geometry_uncached: GeometryUncached{
-            dimensions: Dimensions{x: Dimension::Grid(1.0), y: Dimension::DisplayPixel(400.0)},
-            ..Default::default()
-        },
-        ..Default::default()
-    });
-
-    scene_graph.add_child(a, GraphNode{
-        state: State{text: "B", ..Default::default()},
-        type_id: 1,
-        geometry_uncached: GeometryUncached{
-            dimensions: Dimensions{x: Dimension::Grid(1.0), y: Dimension::DisplayPixel(20.0), ..Default::default()},
-            ..Default::default()
-        },
-        ..Default::default()
-    });
-
-    scene_graph.add_child(a, GraphNode{
-        type_id: 2,
-        geometry_uncached: GeometryUncached{
-            dimensions: Dimensions{x: Dimension::Grid(1.0), y: Dimension::Viewport(1.0), ..Default::default()},
-            ..Default::default()
-        },
-        ..Default::default()
-    });
+    let (mut scene_graph, _) = SceneGraph::new();
+    test_fixture::web_browser(&mut scene_graph);
 
     // SDL2 Window doesn't resize on start, but this event does happen
-    layout::layout(&Cartographer{window: &window_size, dpi: &Xy{x:96.0, y: 96.0}}, &scene_graph, root);
+    layout::layout_root(&Cartographer{window: &window_size, dpi: &Xy{x:96.0, y: 96.0}}, &scene_graph);
 
     for e in window {
 
@@ -134,9 +76,7 @@ fn main() {
         // Only occurs if mouse button down while leaving window frame... HoverState::Drag.
         // Only works properly in SDL2
         if let Some(cursor) = e.cursor_args() {
-            if cursor {
-                println!("Mouse entered");
-            }
+            if cursor { println!("Mouse entered"); }
             else { println!("Mouse left"); }
         };
 
@@ -144,7 +84,7 @@ fn main() {
         e.text(|text| println!("Typed '{}'", text));
         e.resize(|w, h| {
             window_size = Xy{x: w as f64, y: h as f64};
-            layout::layout(&Cartographer{window: &window_size, dpi: &Xy{x:96.0, y: 96.0}}, &scene_graph, root);
+            layout::layout_root(&Cartographer{window: &window_size, dpi: &Xy{x:96.0, y: 96.0}}, &scene_graph);
             println!("Resized '{}, {}'", w, h)
         });
 

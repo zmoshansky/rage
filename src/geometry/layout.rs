@@ -1,4 +1,4 @@
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Layouts {
     direction: Direction,
     x: Layout,
@@ -7,6 +7,7 @@ pub struct Layouts {
     // z: Layout,
 }
 
+#[derive(Clone)]
 enum Layout {
     Start,
     Center,
@@ -18,6 +19,7 @@ enum Layout {
 }
 impl Default for Layout {fn default() -> Layout { Layout::Start }}
 
+#[derive(Clone)]
 enum Direction {
     Right,
     Left,

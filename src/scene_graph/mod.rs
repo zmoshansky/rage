@@ -1,8 +1,11 @@
-use rose_tree::{RoseTree, NodeIndex};
+use rose_tree::{RoseTree, NodeIndex, ROOT};
 use widget::Widget;
 use graph_node::GraphNode;
 use std::cell::RefCell;
-use std::cell::Cell;
+use std::mem;
+
+use appearance::Appearance;
+use appearance::background::Background;
 
 // #[derive(Default)]
 pub struct SceneGraph<'a> {
@@ -16,12 +19,25 @@ pub struct SceneGraph<'a> {
 
 impl<'a> SceneGraph<'a> {
     pub fn new() -> (Self, NodeIndex) {
-        let (tree, root) = RoseTree::<GraphNode, u32>::new(GraphNode{id: Cell::new(0), type_id: 0, dirty: Cell::new(true), ..Default::default()});
+        let (tree, root) = RoseTree::<GraphNode, u32>::new(GraphNode{
+          id: 0,
+          type_id: 0,
+          appearance: Appearance{
+              background: Some(Background::Color([1.0; 4])),
+              ..Default::default()
+          },
+          ..Default::default()
+        });
         (SceneGraph{types: Vec::new(), tree:  RefCell::new(tree), id_counter: 1}, root)
     }
-    pub fn add_child(&mut self, root: NodeIndex, node: GraphNode<'a>) -> NodeIndex {
-        node.id.set(self.id_counter);
+    pub fn add_child(&mut self, root: NodeIndex, node: &mut GraphNode<'a>) -> NodeIndex {
+        // TODO - Figure out if this is possible without the mem::replace
+        let mut moved_node = mem::replace(node, GraphNode::default());
+        moved_node.id = self.id_counter;
         self.id_counter += 1;
-        self.tree.borrow_mut().add_child(root, node)
+        self.tree.borrow_mut().add_child(root, moved_node)
+    }
+    pub fn add_child_root(&mut self, node: &mut GraphNode<'a>) -> NodeIndex {
+        self.add_child(NodeIndex::new(ROOT), node)
     }
 }

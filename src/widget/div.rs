@@ -3,15 +3,30 @@ use widget::{Widget, State};
 use renderer::Renderer;
 use renderer::geometry::Geometry;
 use appearance::Appearance;
-use collision::HoverState;
+use appearance::background::Background;
+use collision;
+// use collision::self, HoverState};
+use appearance::color;
 
 pub struct Div;
-impl Widget for Div{
-    fn render<'a>(&self, renderer: Renderer, _appearance: &Appearance, geometry: &Geometry, state: &'a State) {
-        let color = if state.hover_state != HoverState::Up {[1.0, 1.0, 0.0, 1.0]} else {[0.0, 0.0, 0.0, 1.0]};
+// https://www.google.com/design/spec/style/color.html#color-color-palette
+fn draw(renderer: Renderer, geometry: &Geometry, color: color::Color) {
+    graphics::rectangle(color,
+        [geometry.position.x, geometry.position.y, geometry.dimensions.x, geometry.dimensions.y],
+        renderer.context.transform, renderer.graphics);
+}
 
-        graphics::rectangle(color,
-            [geometry.position.x, geometry.position.y, geometry.dimensions.x, geometry.dimensions.y],
-            renderer.context.transform, renderer.graphics);
+impl Widget for Div{
+    /// Draws if there is a background set
+    /// DEBUG - Always draws if hovering
+    fn render<'a>(&self, renderer: Renderer, appearance: &Appearance, geometry: &Geometry, state: &'a State) {
+        if collision::over(&state.hover_state) {
+            draw(renderer, geometry, color::hex("F4433660"));
+        }
+        else {
+            if let Some(Background::Color(bg)) = appearance.background {
+                draw(renderer, geometry, bg);
+            }
+        };
     }
 }

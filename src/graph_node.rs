@@ -7,10 +7,10 @@ use renderer::geometry::Geometry;
 use appearance::Appearance;
 use widget::State;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct GraphNode<'a> {
-    pub id: Cell<u32>,
-    // TODO - Make Ref/Box to whatever type
+    pub id: u32,
+    // TODO - Make the state type customizable
     pub state: State<'a>,
     pub geometry_uncached: GeometryUncached,
     pub geometry: RefCell<Geometry>,
@@ -25,14 +25,6 @@ pub struct GraphNode<'a> {
 
 impl<'a> fmt::Debug for GraphNode<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "GraphNode {{ id: {}, type_id: {} }}", self.id.get(), self.type_id)
+        write!(f, "Node {{ id: {}, type_id: {} }}", self.id, self.type_id)
     }
 }
-// impl Default for GraphNode {
-//     fn default() -> GraphNode {
-//         GraphNode{
-//             state: State::new(),
-
-//         }
-//     }
-// }
