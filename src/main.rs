@@ -22,8 +22,8 @@ use scene_graph::SceneGraph;
 use layout::Cartographer;
 use collision::CollisionArgs;
 
+use renderer::{image, geometry};
 use renderer::Renderer;
-use renderer::geometry::Xy;
 
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 600;
@@ -41,15 +41,18 @@ fn main() {
     let font_path = Path::new("assets/fonts/NotoSans/NotoSans-Regular.ttf");
     let mut glyph_cache = Glyphs::new(&font_path, window.factory.borrow().clone()).unwrap();
 
+    // Image Cache
+    let mut image_cache = image::ImageCache::default();
+    image_cache.load_image_from_path(&window, "assets/images/rust.png");
+
     // Capture mouse coordinates
-    let mut cursor = Xy::default();
-    let mut window_size = Xy{x: WIDTH as f64, y: HEIGHT as f64};
+    let mut cursor = geometry::Xy::default();
+    let mut window_size = geometry::Xy{x: WIDTH as f64, y: HEIGHT as f64};
 
     let (mut scene_graph, _) = SceneGraph::new();
     test_fixture::web_browser(&mut scene_graph);
 
-    // SDL2 Window doesn't resize on start, but this event does happen
-    layout::layout_root(&Cartographer{window: &window_size, dpi: &Xy{x:96.0, y: 96.0}}, &scene_graph);
+    layout::layout_root(&Cartographer{window: &window_size, dpi: &geometry::Xy{x:96.0, y: 96.0}}, &scene_graph);
 
     for e in window {
 
@@ -81,8 +84,8 @@ fn main() {
         e.mouse_scroll(|dx, dy| println!("Scrolled mouse '{}, {}'", dx, dy));
         e.text(|text| println!("Typed '{}'", text));
         e.resize(|w, h| {
-            window_size = Xy{x: w as f64, y: h as f64};
-            layout::layout_root(&Cartographer{window: &window_size, dpi: &Xy{x:96.0, y: 96.0}}, &scene_graph);
+            window_size = geometry::Xy{x: w as f64, y: h as f64};
+            layout::layout_root(&Cartographer{window: &window_size, dpi: &geometry::Xy{x:96.0, y: 96.0}}, &scene_graph);
             println!("Resized '{}, {}'", w, h)
         });
 
@@ -101,7 +104,7 @@ fn main() {
         //     println!("Update");
         // });
         e.draw_2d(|c, g| {
-            renderer::render(Renderer{context: c, graphics: g, glyphs: &mut glyph_cache}, &scene_graph);
+            renderer::render(&mut Renderer{context: c, graphics: g, glyphs: &mut glyph_cache, images: &mut image_cache}, &scene_graph);
         });
 
         // Only works with SDL2 Window

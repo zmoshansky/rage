@@ -15,7 +15,7 @@ pub struct State {
 
 
 pub trait Widget: WidgetClone + Debug {
-    fn render(&self, renderer: Renderer, appearance: &Appearance, geometry: &Geometry, state: &State);
+    fn render(&self, renderer: &mut Renderer, appearance: &Appearance, geometry: &Geometry, state: &State);
 }
 
 // https://stackoverflow.com/questions/30353462/how-to-clone-a-struct-storing-a-trait-object

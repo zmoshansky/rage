@@ -12,7 +12,7 @@ pub struct Text{
 }
 
 impl Widget for Text{
-    fn render<'a>(&self, renderer: Renderer, appearance: &Appearance, geometry: &Geometry, _state: &'a State) {
+    fn render<'a>(&self, renderer: &mut Renderer, appearance: &Appearance, geometry: &Geometry, _state: &'a State) {
         // Determine font y-position related to size...
         // Unsure if magic numbers, specific to a font, or related to font system in rust.
         // 400:(-94..<97.249>..-100.4980)
