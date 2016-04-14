@@ -14,7 +14,14 @@ use appearance::font::Font;
 
 // https://www.google.com/design/spec/style/color.html#color-color-palette
 pub fn web_browser(scene_graph: &mut SceneGraph) {
-    let container = scene_graph.add_child_root(&mut Node{
+    let icon_layout = Layout{
+        dimensions: Dimensions{x: Dimension::DisplayPixel(50.0), y: Dimension::DisplayPixel(50.0)},
+        padding: geometry::Spacing{top: 8.0, left: 8.0, bottom: 8.0, right: 8.0},
+        ..Default::default()
+    };
+
+
+    let container = scene_graph.add_child_root(Box::new(Node{
         appearance: Appearance{
             background: Some(Background::Color(color::hex("FAFAFA"))),
             ..Default::default()
@@ -28,11 +35,11 @@ pub fn web_browser(scene_graph: &mut SceneGraph) {
             ..Default::default()
         },
         ..Default::default()
-    });
+    }));
 
 
     // Tab Bar
-    let tab_bar = scene_graph.add_child(container, &mut Node{
+    let tab_bar = scene_graph.add_child(container, Box::new(Node{
         appearance: Appearance{
             background: Some(Background::Color(color::hex("212121"))),
             ..Default::default()
@@ -42,7 +49,7 @@ pub fn web_browser(scene_graph: &mut SceneGraph) {
             ..Default::default()
         },
         ..Default::default()
-    });
+    }));
 
     let tab = Node{
         appearance: Appearance{
@@ -58,20 +65,26 @@ pub fn web_browser(scene_graph: &mut SceneGraph) {
         ..Default::default()
     };
 
-    let tab_0 = scene_graph.add_child(tab_bar, &mut tab.clone());
+    let tab_0 = scene_graph.add_child(tab_bar, Box::new(tab.clone()));
     let mut tab_1 = tab.clone();
     tab_1.appearance.background = Some(Background::Color(color::hex("626262")));
-    let tab_1 = scene_graph.add_child(tab_bar, &mut tab_1);
-    let tab_2 = scene_graph.add_child(tab_bar, &mut tab.clone());
+    let tab_1 = scene_graph.add_child(tab_bar, Box::new(tab_1));
+    let tab_2 = scene_graph.add_child(tab_bar, Box::new(tab.clone()));
+
+    scene_graph.add_child(tab_bar, Box::new(Node{
+        layout: icon_layout.clone(),
+        widget: Box::new(image::Image{path: "assets/icons/plus.png"}),
+        ..Default::default()
+    }));
 
     // Spacer for the end since we don't yet have min/max-width
-    scene_graph.add_child(tab_bar, &mut Node{
+    scene_graph.add_child(tab_bar, Box::new(Node{
         layout: Layout{
             dimensions: Dimensions{x: Dimension::Grid(3.0), y: Dimension::Percent(1.0)},
             ..Default::default()
         },
         ..Default::default()
-    });
+    }));
 
     // Tab Text
     let tab_text = Node{
@@ -88,56 +101,58 @@ pub fn web_browser(scene_graph: &mut SceneGraph) {
 
     let mut tab_0_text = tab_text.clone();
     tab_0_text.widget = Box::new(text::Text{text: "Getting Started"});
-    scene_graph.add_child(tab_0, &mut tab_0_text);
+    scene_graph.add_child(tab_0, Box::new(tab_0_text));
 
     let mut tab_1_text = tab_text.clone();
     tab_1_text.widget = Box::new(text::Text{text: "YouTube"});
-    scene_graph.add_child(tab_1, &mut tab_1_text);
+    scene_graph.add_child(tab_1, Box::new(tab_1_text));
 
     let mut tab_2_text = tab_text.clone();
     tab_2_text.widget = Box::new(text::Text{text: "StackOverflow"});
-    scene_graph.add_child(tab_2, &mut tab_2_text);
+    scene_graph.add_child(tab_2, Box::new(tab_2_text));
 
 
     // Address Bar
-    let address_bar = scene_graph.add_child(container, &mut Node{
+    let address_bar = scene_graph.add_child(container, Box::new(Node{
         appearance: Appearance{
-            background: Some(Background::Color(color::hex("212121"))),
+            background: Some(Background::Color(color::hex("949898"))),
             ..Default::default()
         },
         layout: Layout{
-            dimensions: Dimensions{x: Dimension::Viewport(1.0), y: Dimension::DisplayPixel(50.0)},
+            dimensions: Dimensions{x: Dimension::Viewport(1.0), y: Dimension::DisplayPixel(70.0)},
             ..Default::default()
         },
         ..Default::default()
-    });
+    }));
 
-    scene_graph.add_child(address_bar, &mut Node{
+    scene_graph.add_child(address_bar, Box::new(Node{
+        layout: Layout{
+            dimensions: Dimensions{x: Dimension::DisplayPixel(30.0), y: Dimension::DisplayPixel(50.0)},
+            padding: geometry::Spacing{top: 8.0, left: 8.0, bottom: 8.0, right: 8.0},
+            ..Default::default()
+        },
+        widget: Box::new(image::Image{path: "assets/icons/left_arrow.png"}),
+        ..Default::default()
+    }));
+
+    scene_graph.add_child(address_bar, Box::new(Node{
         appearance: Appearance{
             font: Some(Font{
                 size: 14.0,
-                color: color::BLACK,
+                color: color::WHITE,
                 ..Default::default()
             }),
-            background: Some(Background::Color(color::WHITE)),
+            background: Some(Background::Color(color::hex("292929"))),
             ..Default::default()
         },
         layout: Layout{
             dimensions: Dimensions{x: Dimension::Percent(0.30), y: Dimension::DisplayPixel(26.0)},
-            margin: geometry::Spacing{top: 6.0, left: 6.0, bottom: 6.0, right: 6.0, ..Default::default()},
-            padding: geometry::Spacing{top: 6.0, left: 6.0, bottom: 6.0, right: 6.0, ..Default::default()},
+            margin: geometry::Spacing{top: 14.0, bottom: 14.0, ..Default::default()},
+            padding: geometry::Spacing{top: 6.0, left: 24.0, bottom: 6.0, right: 6.0, ..Default::default()},
             ..Default::default()
         },
         widget: Box::new(text::Text{text: "https://www.youtube.com"}),
         ..Default::default()
-    });
+    }));
 
-    scene_graph.add_child(container, &mut Node{
-        layout: Layout{
-            dimensions: Dimensions{x: Dimension::Viewport(1.0), y: Dimension::DisplayPixel(100.0)},
-            ..Default::default()
-        },
-        widget: Box::new(image::Image{path: "assets/images/rust.png"}),
-        ..Default::default()
-    });
 }

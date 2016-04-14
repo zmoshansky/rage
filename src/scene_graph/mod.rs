@@ -1,10 +1,11 @@
 pub mod node;
 
-use rose_tree::{RoseTree, NodeIndex, ROOT};
-use scene_graph::node::Node;
 use std::cell::RefCell;
-use std::mem;
+use std::boxed::Box;
 
+use rose_tree::{RoseTree, NodeIndex, ROOT};
+
+use scene_graph::node::Node;
 use appearance::Appearance;
 use appearance::background::Background;
 
@@ -28,15 +29,13 @@ impl SceneGraph {
         });
         (SceneGraph{tree:  RefCell::new(tree), id_counter: 1}, root)
     }
-    pub fn add_child(&mut self, root: NodeIndex, node: &mut Node) -> NodeIndex {
-        // TODO - Figure out if this is possible without the mem::replace
-        // Don't want to return anything like `Node::default()`
-        let mut moved_node = mem::replace(node, Node::default());
+    pub fn add_child(&mut self, root: NodeIndex, node: Box<Node>) -> NodeIndex {
+        let mut moved_node = *node;
         moved_node.id = self.id_counter;
         self.id_counter += 1;
         self.tree.borrow_mut().add_child(root, moved_node)
     }
-    pub fn add_child_root(&mut self, node: &mut Node) -> NodeIndex {
+    pub fn add_child_root(&mut self, node: Box<Node>) -> NodeIndex {
         self.add_child(NodeIndex::new(ROOT), node)
     }
 }

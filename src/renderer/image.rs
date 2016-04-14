@@ -8,8 +8,8 @@ use sdl2_window;
 
 #[derive(Default)]
 pub struct ImageCache<'a> {
-    // TODO - Allow different dimensioned images
-    // Useful for SVG
+    // TODO - Allow different dimensioned images, useful for SVG rasterizing.
+    // TODO - SVG rasterizer, build on cairo and librsvg, contribute to piston.
     pub images: HashMap<&'a str, piston_window::Texture<gfx_device_gl::Resources>>,
     // pub images: &'a mut HashMap<&'a str, Vec<ImageMeta>>,
 }

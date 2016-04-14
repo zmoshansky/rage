@@ -106,7 +106,7 @@ pub fn layout(cartographer: &Cartographer, scene_graph: &SceneGraph, root: NodeI
         }
 
         // TODO - Calc and Set Border, Margins, and Padding from Layout to Geometry
-        // Assuming already in pixels for now
+        // Assuming display pixels for now
         let mut geometry = node.geometry.borrow_mut();
         geometry.border.left = compute_display_pixel_x(&cartographer, node.layout.border.left);
         geometry.padding.left = compute_display_pixel_x(&cartographer, node.layout.padding.left);
@@ -121,9 +121,6 @@ pub fn layout(cartographer: &Cartographer, scene_graph: &SceneGraph, root: NodeI
         geometry.border.bottom = compute_display_pixel_y(&cartographer, node.layout.border.bottom);
         geometry.padding.bottom = compute_display_pixel_y(&cartographer, node.layout.padding.bottom);
         geometry.margin.bottom = compute_display_pixel_y(&cartographer, node.layout.margin.bottom);
-        // .clone();
-        // geometry.padding = node.layout.padding.clone();
-        // geometry.margin = node.layout.margin.clone();
     }
 
     // Handle Grid Layouts
@@ -163,8 +160,8 @@ pub fn layout_root(cartographer: &Cartographer, scene_graph: &SceneGraph) {
 
 fn position_children(parent: &Node, node: &Node, bounding_position: &mut geometry::Xy) {
     match node.layout.position {
-        position::Position::Relative(ref _pos) => {}
-        position::Position::Absolute(ref _pos) => {}
+        position::Position::Relative(ref _pos) => {unimplemented!();}
+        position::Position::Absolute(ref _pos) => {unimplemented!();}
         // TODO - Child cannot override flow yet.
         position::Position::Flow(ref _flow_self) => {
             match parent.layout.flow.direction {

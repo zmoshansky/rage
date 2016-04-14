@@ -20,6 +20,7 @@ pub struct Node {
     pub appearance: Appearance,
 
     // Use Cell to allow mutable value...
+    // TODO - Change this to reflect what's needed, layout pass, render pass, etc.
     pub dirty: Cell<bool>,
     pub widget: Box<widget::Widget>
 }

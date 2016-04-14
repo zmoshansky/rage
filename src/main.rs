@@ -44,6 +44,8 @@ fn main() {
     // Image Cache
     let mut image_cache = image::ImageCache::default();
     image_cache.load_image_from_path(&window, "assets/images/rust.png");
+    image_cache.load_image_from_path(&window, "assets/icons/plus.png");
+    image_cache.load_image_from_path(&window, "assets/icons/left_arrow.png");
 
     // Capture mouse coordinates
     let mut cursor = geometry::Xy::default();
