@@ -1,6 +1,8 @@
 # RAGE - `Rusty Application Gui Extravaganza`
 #####
 
+This is very WIP, do not use.
+
 # Architecture
 ## WorkFlow
 Event -> State -> Style -> Layout -> Geometry -> Render

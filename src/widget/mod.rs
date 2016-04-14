@@ -1,5 +1,6 @@
 pub mod text;
 pub mod div;
+pub mod image;
 
 use renderer::Renderer;
 use renderer::geometry::Geometry;

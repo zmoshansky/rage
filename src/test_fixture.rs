@@ -5,7 +5,7 @@ use layout::dimension::{Dimensions, Dimension};
 use renderer::geometry;
 use scene_graph::node::Node;
 use scene_graph::SceneGraph;
-use widget::text;
+use widget::{text, image};
 use appearance::Appearance;
 use appearance::background::Background;
 use appearance::color;
@@ -129,6 +129,14 @@ pub fn web_browser(scene_graph: &mut SceneGraph) {
             ..Default::default()
         },
         widget: Box::new(text::Text{text: "https://www.youtube.com"}),
+        ..Default::default()
+    });
+    let address_bar = scene_graph.add_child(container, &mut Node{
+        layout: Layout{
+            dimensions: Dimensions{x: Dimension::Viewport(1.0), y: Dimension::DisplayPixel(100.0)},
+            ..Default::default()
+        },
+        widget: Box::new(image::Image{path: "assets/fonts/NotoSans/NotoSans-Regular.ttf"}),
         ..Default::default()
     });
 }

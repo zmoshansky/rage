@@ -1,9 +1,11 @@
 #[allow(dead_code)]
 pub mod geometry;
 
-use piston_window::{Context, G2d, Glyphs};
+// use piston_window::{Context, G2d, Glyphs};
+use piston_window::*;
 use rose_tree::{ROOT, petgraph};
 use scene_graph::SceneGraph;
+use sdl2_window;
 
 use widget::{Widget};
 
@@ -11,6 +13,7 @@ pub struct Renderer<'a, 'b: 'a> {
     pub context: Context,
     pub graphics: &'a mut G2d<'b>,
     pub glyphs: &'a mut Glyphs,
+    // pub window: &'a mut PistonWindow<(), sdl2_window::Sdl2Window>
 }
 
 pub fn render(renderer: Renderer, scene_graph: &SceneGraph) {
