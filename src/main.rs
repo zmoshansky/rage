@@ -10,12 +10,10 @@ use piston_window::{PistonWindow, WindowSettings, Glyphs};
 use piston::input::*;
 use sdl2_window::Sdl2Window;
 
-mod graph_node;
 mod scene_graph;
 mod widget;
 mod renderer;
 mod appearance;
-mod geometry;
 mod layout;
 mod collision;
 mod test_fixture;

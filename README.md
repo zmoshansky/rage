@@ -1,18 +1,12 @@
+# RAGE - `Rusty Application Gui Extravaganza`
+#####
+
 # Architecture
-## Flow
-Event -> Geometry -> Render
+## WorkFlow
+Event -> State -> Style -> Layout -> Geometry -> Render
 
-      -> Style  -> Geometry -> Render
-                -> Render
-
-`Event -> Geometry`
-- Uncommon, Window changed size
-
-`Style -> Geometry`
-- Common, Change size of element
-
-## Styles (Styles = Appearance + Geometry + CustomVars)
-Multiple merged maps, with later maps overriding earlier ones.
+## Styles (Styles = Appearance + Layout + CustomVars)
+Conditional Rules that are evaluated to create the Appearance and Layout.
 
 ### Rules
 ```

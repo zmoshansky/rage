@@ -1,7 +1,5 @@
 #[allow(dead_code)]
 pub mod geometry;
-#[allow(dead_code)]
-pub mod appearance;
 
 use piston_window::{Context, G2d, Glyphs};
 use rose_tree::{ROOT, petgraph};
@@ -21,7 +19,8 @@ pub fn render(renderer: Renderer, scene_graph: &SceneGraph) {
     let dfs = petgraph::DfsIter::new(tree.graph(), petgraph::graph::NodeIndex::new(ROOT));
     for node_index in dfs {
         let node = &tree[node_index];
-        // TODO - Figure out how to do occlusion, proper rendering based on z-index.
+        // TODO - Figure out occlusion, proper rendering based on z-index, handling opacity.
+        // Intermediate Optimization - Set dirty for entire tree.
         // Must re-render every node higher than the dirty one...
         node.dirty.set(true);
         if node.dirty.get() {

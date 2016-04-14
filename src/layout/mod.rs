@@ -1,22 +1,49 @@
-use geometry::dimension::{Dimension};
-// use geometry::Geometry as GeometryUncached;
-use graph_node::GraphNode;
-use scene_graph::SceneGraph;
+#[allow(dead_code)]
+pub mod dimension;
+#[allow(dead_code)]
+pub mod position;
+#[allow(dead_code)]
+pub mod overflow;
+#[allow(dead_code)]
+pub mod flow;
+#[allow(dead_code)]
+pub mod box_model;
+// TODO
+#[allow(dead_code)]
+// pub mod spacing;
+
+
 use rose_tree::{ROOT, NodeIndex};
 
-use renderer::geometry::{Xy};
+use scene_graph::node::Node;
+use scene_graph::SceneGraph;
+use renderer::geometry;
+
+use layout::dimension::Dimension;
 
 /// A struct to hold constants needed for the layout engine
+// TODO - Rename to LayoutArgs
 pub struct Cartographer<'a> {
-    pub window: &'a Xy,
-    pub dpi: &'a Xy,
+    pub window: &'a geometry::Xy,
+    pub dpi: &'a geometry::Xy,
 }
 
-// impl<'a> Default for Cartographer<'a> {
-//     fn default() -> Cartographer<'a> {
-//         Cartographer{window: &'a Xy{x: 800.0, y: 600.0}, dpi: &Xy{x:96.0, y: 96.0}}
-//     }
-// }
+#[derive(Default, Clone)]
+pub struct Layout {
+    pub overflows: overflow::Overflows,
+    pub dimensions: dimension::Dimensions,
+    pub position: position::Position,
+
+    pub border: geometry::Spacing,
+    pub margin: geometry::Spacing,
+    pub padding: geometry::Spacing,
+
+    pub box_model: box_model::BoxModel,
+
+    /// Containers
+    pub flow: flow::Flow,
+}
+
 
 // Hybrid BFS/DFS traversal.
 /// 1.) Layout(root)
@@ -32,19 +59,14 @@ pub struct Cartographer<'a> {
 
 // A node `a` will have it's geometry set before traversing it's children; except if its dimension is of type `wrap`.
 // TODO - Special case for wrap... Probably need to return width/height of nodes
-// TODO - Standardize geometry to account for padding/margins
-
-pub fn layout_root(cartographer: &Cartographer, scene_graph: &SceneGraph) {
-    layout(cartographer, scene_graph, NodeIndex::new(ROOT));
-}
-/// Layout all of root's children
+/// Layout all of a node's children
 pub fn layout(cartographer: &Cartographer, scene_graph: &SceneGraph, root: NodeIndex) {
     // BFS = FIFO Queue, DFS = Stack
     // BFS from pet_graph doesn't work since we need to know when we're done traversing a level.
     let tree = scene_graph.tree.borrow();
 
     // Special case to layout tree's root
-    let parent: &GraphNode = &tree[root];
+    let parent: &Node = &tree[root];
     // TODO - Move special case to graph creation
     if root.index() == ROOT {
         set_dimension_x(parent, compute_viewport_x(&cartographer, 1.0));
@@ -59,18 +81,11 @@ pub fn layout(cartographer: &Cartographer, scene_graph: &SceneGraph, root: NodeI
         child_indices.push(nx);
     }
     child_indices.reverse();
-
-    // TODO - Utilize the position properties
-    let mut position = Xy{
-        x: parent.geometry.borrow().position.x + parent.geometry.borrow().margin.left + parent.geometry.borrow().padding.left,
-        y: parent.geometry.borrow().position.y + parent.geometry.borrow().margin.top + parent.geometry.borrow().padding.top
-    };
     let (mut sum_x, mut sum_y) = (0.0, 0.0);
 
     for nx in child_indices.clone() {
         let node = &tree[nx];
-
-        let x_dimension_pixels: Option<f64> = match node.geometry_uncached.dimensions.x {
+        let x_dimension_pixels: Option<f64> = match node.layout.dimensions.x {
             Dimension::DisplayPixel(x) => Some(compute_display_pixel_x(&cartographer, x)),
             Dimension::Viewport(x) => Some(compute_viewport_x(&cartographer, x)),
             Dimension::Percent(x) => Some(compute_percent_x(parent, x)),
@@ -80,7 +95,7 @@ pub fn layout(cartographer: &Cartographer, scene_graph: &SceneGraph, root: NodeI
             set_dimension_x(node, x_dimension_pixels);
         }
 
-        let y_dimension_pixels: Option<f64> = match node.geometry_uncached.dimensions.y {
+        let y_dimension_pixels: Option<f64> = match node.layout.dimensions.y {
             Dimension::DisplayPixel(y) => Some(compute_display_pixel_y(&cartographer, y)),
             Dimension::Viewport(y) => Some(compute_viewport_y(&cartographer, y)),
             Dimension::Percent(y) => Some(compute_percent_y(parent, y)),
@@ -89,6 +104,13 @@ pub fn layout(cartographer: &Cartographer, scene_graph: &SceneGraph, root: NodeI
         if let Some(y_dimension_pixels) = y_dimension_pixels {
             set_dimension_y(node, y_dimension_pixels);
         }
+
+        // TODO - Calc and Set Border, Margins, and Padding from Layout to Geometry
+        // Assuming already in pixels for now
+        let mut geometry = node.geometry.borrow_mut();
+        geometry.border = node.layout.border.clone();
+        geometry.padding = node.layout.padding.clone();
+        geometry.margin = node.layout.margin.clone();
     }
 
     // Handle Grid Layouts
@@ -96,69 +118,86 @@ pub fn layout(cartographer: &Cartographer, scene_graph: &SceneGraph, root: NodeI
         for nx in child_indices.clone() {
             let node = &tree[nx];
             if sum_x > 0.0 {
-                if let Dimension::Grid(x) = node.geometry_uncached.dimensions.x {
+                if let Dimension::Grid(x) = node.layout.dimensions.x {
                     set_dimension_x(node, compute_percent_x(parent, x / sum_x));
                 }
             }
             if sum_y > 0.0 {
-                if let Dimension::Grid(y) = node.geometry_uncached.dimensions.y {
+                if let Dimension::Grid(y) = node.layout.dimensions.y {
                     set_dimension_y(node, compute_percent_y(parent, y / sum_y));
                 }
             }
         }
     }
 
-    // Recursively lay out children
+    // TODO - Add dimension geometry::Xy, to account for max height,width when wrapping
+    // TODO - Account for reverse flow directions
+    let mut position = geometry::Xy{
+        x: parent.geometry.borrow().position.x,
+        y: parent.geometry.borrow().position.y
+    };
+    // Postion & Recursively lay out children
     for nx in child_indices.clone() {
-        set_position(&tree[nx], &mut position);
+        position_children(&parent, &tree[nx], &mut position);
         println!("layout::layout {:?} {:?} {}", tree[nx], tree[nx].geometry.borrow(), nx.index());
         layout(cartographer, scene_graph, nx);
     }
 }
 
-/// Uses W3C Content-Box by default
-fn bounding_box(node: &GraphNode) -> Xy {
-    // TODO - Account for alternate bounding models - http://www.binvisions.com/articles/box-sizing-property-difference-content-border/
-    let geometry = node.geometry.borrow();
-    Xy{
-        x: geometry.margin.left + geometry.margin.right + geometry.padding.left + geometry.padding.right + geometry.dimensions.x,
-        y: geometry.margin.top + geometry.margin.bottom + geometry.padding.top + geometry.padding.bottom + geometry.dimensions.y,
+pub fn layout_root(cartographer: &Cartographer, scene_graph: &SceneGraph) {
+    layout(cartographer, scene_graph, NodeIndex::new(ROOT));
+}
+
+fn position_children(parent: &Node, node: &Node, bounding_position: &mut geometry::Xy) {
+    match node.layout.position {
+        position::Position::Relative(ref _pos) => {}
+        position::Position::Absolute(ref _pos) => {}
+        // TODO - Child cannot override flow yet.
+        position::Position::Flow(ref _flow_self) => {
+            match parent.layout.flow.direction {
+                flow::Direction::Right => {
+                    set_position_x(node, bounding_position.x);
+                    set_position_y(node, bounding_position.y);
+                    let bounds = node.geometry.borrow().bounding_dimensions();
+                    bounding_position.x += bounds.x;
+                }
+                flow::Direction::Down => {
+                    set_position_x(node, bounding_position.x);
+                    set_position_y(node, bounding_position.y);
+                    let bounds = node.geometry.borrow().bounding_dimensions();
+                    bounding_position.y += bounds.y;
+                }
+                // flow::flow_right(parent, node, &mut bounding_position),
+                _=> {}
+            }
+        }
     }
 }
 
-fn set_position(node: &GraphNode, position: &mut Xy) {
-    set_position_x(node, position.x);
-    set_position_y(node, position.y);
-    let bounds = bounding_box(node);
-    position.x += bounds.x;
-    // TODO - Assuming Horizontal layout
-    // position.y += bounds.y;
-}
-
-fn set_position_x(node: &GraphNode, dimension: f64) {
+fn set_position_x(node: &Node, bounding_pos_x: f64) {
     let mut geometry = node.geometry.borrow_mut();
-    if geometry.position.x != dimension {
-      geometry.position.x = dimension;
-      node.dirty.set(true);
-    };
+    if geometry.set_bounding_position_x(bounding_pos_x) {
+        node.dirty.set(true);
+    }
 }
 
-fn set_position_y(node: &GraphNode, dimension: f64) {
+fn set_position_y(node: &Node, bounding_pos_y: f64) {
     let mut geometry = node.geometry.borrow_mut();
-    if geometry.position.y != dimension {
-      geometry.position.y = dimension;
-      node.dirty.set(true);
-    };
+    if geometry.set_bounding_position_y(bounding_pos_y) {
+        node.dirty.set(true);
+    }
 }
 
-fn set_dimension_x(node: &GraphNode, dimension: f64) {
+// TODO - Account for box-model
+fn set_dimension_x(node: &Node, dimension: f64) {
     let mut geometry = node.geometry.borrow_mut();
     if geometry.dimensions.x != dimension {
       geometry.dimensions.x = dimension;
       node.dirty.set(true);
     };
 }
-fn set_dimension_y(node: &GraphNode, dimension: f64) {
+// TODO - Account for box-model
+fn set_dimension_y(node: &Node, dimension: f64) {
     let mut geometry = node.geometry.borrow_mut();
     if geometry.dimensions.y != dimension {
       geometry.dimensions.y = dimension;
@@ -166,8 +205,8 @@ fn set_dimension_y(node: &GraphNode, dimension: f64) {
     };
 }
 
-fn compute_percent_x(parent: &GraphNode, dimension: f64) -> f64 {dimension * parent.geometry.borrow().dimensions.x}
-fn compute_percent_y(parent: &GraphNode, dimension: f64) -> f64 {dimension * parent.geometry.borrow().dimensions.y}
+fn compute_percent_x(parent: &Node, dimension: f64) -> f64 {dimension * (parent.geometry.borrow().dimensions.x)}
+fn compute_percent_y(parent: &Node, dimension: f64) -> f64 {dimension * (parent.geometry.borrow().dimensions.y)}
 fn compute_viewport_x(cartographer: &Cartographer, dimension: f64) -> f64 {dimension * cartographer.window.x}
 fn compute_viewport_y(cartographer: &Cartographer, dimension: f64) -> f64 {dimension * cartographer.window.y}
 fn compute_display_pixel_x(cartographer: &Cartographer, dimension: f64) -> f64 {dimension * (cartographer.dpi.x / 160.0)}

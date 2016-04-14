@@ -1,8 +1,10 @@
 // Individually import items to determine what's needed. Later group so glob imports can be used.
-use graph_node::GraphNode;
-use geometry::{Geometry as GeometryUncached};
-use geometry::dimension::{Dimensions, Dimension};
+use layout::Layout;
+use layout::{flow};
+use layout::dimension::{Dimensions, Dimension};
+use renderer::geometry;
 use widget::State;
+use scene_graph::node::Node;
 use scene_graph::SceneGraph;
 use widget::div::Div;
 use widget::button::Button;
@@ -11,46 +13,67 @@ use appearance::background::Background;
 use appearance::color;
 use appearance::font::Font;
 
+
+// https://www.google.com/design/spec/style/color.html#color-color-palette
 pub fn web_browser(scene_graph: &mut SceneGraph) {
     scene_graph.types.push(Box::new(Div));
     scene_graph.types.push(Box::new(Button));
 
-    // Tabbar Container
-    let tab = GraphNode{
+    let container =  scene_graph.add_child_root(&mut Node{
         type_id: 0,
         appearance: Appearance{
-            background: Some(Background::Color(color::hex("424242"))),
+            background: Some(Background::Color(color::hex("FAFAFA"))),
             ..Default::default()
         },
-        geometry_uncached: GeometryUncached{
-            dimensions: Dimensions{x: Dimension::Grid(1.0), y: Dimension::Percent(1.0)},
+        layout: Layout{
+            dimensions: Dimensions{x: Dimension::Viewport(1.0), y: Dimension::Viewport(1.0)},
+            flow: flow::Flow{
+                direction: flow::Direction::Down,
+                ..Default::default()
+            },
             ..Default::default()
         },
         ..Default::default()
-    };
+    });
 
-    // Tabs
-    let tabs = scene_graph.add_child_root(&mut GraphNode{
+
+    // Tab Bar
+    let tab_bar = scene_graph.add_child(container, &mut Node{
         type_id: 0,
         appearance: Appearance{
             background: Some(Background::Color(color::hex("212121"))),
             ..Default::default()
         },
-        geometry_uncached: GeometryUncached{
+        layout: Layout{
             dimensions: Dimensions{x: Dimension::Viewport(1.0), y: Dimension::DisplayPixel(40.0)},
             ..Default::default()
         },
         ..Default::default()
     });
 
-    let tab_0 = scene_graph.add_child(tabs, &mut tab.clone());
-    let tab_1 = scene_graph.add_child(tabs, &mut tab.clone());
-    let tab_2 = scene_graph.add_child(tabs, &mut tab.clone());
+    let tab = Node{
+        type_id: 0,
+        appearance: Appearance{
+            background: Some(Background::Color(color::hex("424242"))),
+            ..Default::default()
+        },
+        layout: Layout{
+            dimensions: Dimensions{x: Dimension::Grid(1.0), y: Dimension::Percent(1.0)},
+            padding: geometry::Spacing{top: 4.0, left: 4.0, ..Default::default()},
+            margin: geometry::Spacing{top: 1.0, left: 1.0, right: 1.0, bottom: 0.0},
+            ..Default::default()
+        },
+        ..Default::default()
+    };
+
+    let tab_0 = scene_graph.add_child(tab_bar, &mut tab.clone());
+    let tab_1 = scene_graph.add_child(tab_bar, &mut tab.clone());
+    let tab_2 = scene_graph.add_child(tab_bar, &mut tab.clone());
 
     // Spacer for the end since we don't yet have min/max-width
-    scene_graph.add_child(tabs, &mut GraphNode{
+    scene_graph.add_child(tab_bar, &mut Node{
         type_id: 0,
-        geometry_uncached: GeometryUncached{
+        layout: Layout{
             dimensions: Dimensions{x: Dimension::Grid(3.0), y: Dimension::Percent(1.0)},
             ..Default::default()
         },
@@ -58,7 +81,7 @@ pub fn web_browser(scene_graph: &mut SceneGraph) {
     });
 
     // Tab Text
-    let tab_text = GraphNode{
+    let tab_text = Node{
         type_id: 1,
         appearance: Appearance{
             font: Some(Font{
@@ -82,4 +105,23 @@ pub fn web_browser(scene_graph: &mut SceneGraph) {
     let mut tab_2_text = tab_text.clone();
     tab_2_text.state = State{text: "StackOverflow", ..Default::default()};
     scene_graph.add_child(tab_2, &mut tab_2_text);
+
+
+    // Address Bar
+    let address_bar = scene_graph.add_child(container, &mut Node{
+        type_id: 0,
+        appearance: Appearance{
+            background: Some(Background::Color(color::hex("212121"))),
+            ..Default::default()
+        },
+        layout: Layout{
+            dimensions: Dimensions{x: Dimension::Viewport(1.0), y: Dimension::DisplayPixel(40.0)},
+            // flow: flow::Flow{
+            //     direction: flow::Direction::Down,
+            //     ..Default::default()
+            // },
+            ..Default::default()
+        },
+        ..Default::default()
+    });
 }

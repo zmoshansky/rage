@@ -2,17 +2,19 @@ use std::cell::Cell;
 use std::cell::RefCell;
 use std::fmt;
 
-use geometry::Geometry as GeometryUncached;
+use layout;
+use widget;
 use renderer::geometry::Geometry;
 use appearance::Appearance;
-use widget::State;
 
 #[derive(Default, Clone)]
-pub struct GraphNode<'a> {
+pub struct Node<'a> {
     pub id: u32,
     // TODO - Make the state type customizable
-    pub state: State<'a>,
-    pub geometry_uncached: GeometryUncached,
+    pub state: widget::State<'a>,
+
+    /// Layout is turned into geometry by Layout pass
+    pub layout: layout::Layout,
     pub geometry: RefCell<Geometry>,
 
     // pub styles/appearance_uncached: StyleRules,
@@ -23,7 +25,7 @@ pub struct GraphNode<'a> {
     pub type_id: usize,
 }
 
-impl<'a> fmt::Debug for GraphNode<'a> {
+impl<'a> fmt::Debug for Node<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Node {{ id: {}, type_id: {} }}", self.id, self.type_id)
     }

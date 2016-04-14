@@ -10,9 +10,9 @@ use appearance::background::Background;
 
 #[derive(Clone)]
 pub struct Appearance {
-    pub opacity: f64,
-    // pub border_rounding: f64
+    // pub filters: Option<Vec<Filters>>,
     // TODO - Check how piston does this
+    // pub border_rounding: f64
 
     // Should these be Optional?
     pub background: Option<Background>,
@@ -22,7 +22,6 @@ pub struct Appearance {
 impl Default for Appearance {
     fn default() -> Appearance {
         Appearance{
-            opacity: 1.0,
             background: None,
             font: None,
         }
