@@ -7,11 +7,10 @@ use widget;
 use renderer::geometry::Geometry;
 use appearance::Appearance;
 
-#[derive(Default, Clone)]
-pub struct Node<'a> {
+#[derive(Clone)]
+pub struct Node {
     pub id: u32,
-    // TODO - Make the state type customizable
-    pub state: widget::State<'a>,
+    pub state: widget::State,
 
     /// Layout is turned into geometry by Layout pass
     pub layout: layout::Layout,
@@ -22,11 +21,24 @@ pub struct Node<'a> {
 
     // Use Cell to allow mutable value...
     pub dirty: Cell<bool>,
-    pub type_id: usize,
+    pub widget: Box<widget::Widget>
+}
+impl Default for Node {
+    fn default() -> Node {
+        Node{
+            id: 0,
+            state: widget::State::default(),
+            layout: layout::Layout::default(),
+            geometry: RefCell::new(Geometry::default()),
+            appearance: Appearance::default(),
+            dirty: Cell::new(false),
+            widget: Box::new(widget::div::Div)
+        }
+    }
 }
 
-impl<'a> fmt::Debug for Node<'a> {
+impl fmt::Debug for Node {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Node {{ id: {}, type_id: {} }}", self.id, self.type_id)
+        write!(f, "Node {{ id: {}, type: {:?} }}", self.id, self.widget)
     }
 }

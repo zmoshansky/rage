@@ -29,5 +29,5 @@ pub enum Dimension {
     // Else, Returns 0 if it isn't a bounded quantity (ex. all children are percentage based.)
     // Wrap,
 }
-impl Default for Dimension {fn default() -> Dimension { Dimension::Viewport(1.0) }}
+impl Default for Dimension {fn default() -> Dimension { Dimension::Percent(1.0) }}
 // impl Default for Dimension {fn default() -> Dimension { Dimension::Flex(1.0) }}

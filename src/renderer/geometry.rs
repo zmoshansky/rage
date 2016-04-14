@@ -1,5 +1,7 @@
+use std::fmt;
+
 /// This is what the layout engine produces when it's finished.
-#[derive(Default, Clone, Debug)]
+#[derive(Default, Clone)]
 pub struct Geometry {
     // Content Box
     pub position: Xyz,
@@ -47,6 +49,13 @@ impl Geometry {
         changed
     }
 }
+
+impl fmt::Debug for Geometry {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Geometry {{ position: {:?}, dimensions: {:?} }}", self.position, self.dimensions)
+    }
+}
+
 
 #[derive(Default, Clone, Debug)]
 pub struct Xyz {

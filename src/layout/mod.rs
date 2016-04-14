@@ -108,9 +108,22 @@ pub fn layout(cartographer: &Cartographer, scene_graph: &SceneGraph, root: NodeI
         // TODO - Calc and Set Border, Margins, and Padding from Layout to Geometry
         // Assuming already in pixels for now
         let mut geometry = node.geometry.borrow_mut();
-        geometry.border = node.layout.border.clone();
-        geometry.padding = node.layout.padding.clone();
-        geometry.margin = node.layout.margin.clone();
+        geometry.border.left = compute_display_pixel_x(&cartographer, node.layout.border.left);
+        geometry.padding.left = compute_display_pixel_x(&cartographer, node.layout.padding.left);
+        geometry.margin.left = compute_display_pixel_x(&cartographer, node.layout.margin.left);
+        geometry.border.right = compute_display_pixel_x(&cartographer, node.layout.border.right);
+        geometry.padding.right = compute_display_pixel_x(&cartographer, node.layout.padding.right);
+        geometry.margin.right = compute_display_pixel_x(&cartographer, node.layout.margin.right);
+
+        geometry.border.top = compute_display_pixel_y(&cartographer, node.layout.border.top);
+        geometry.padding.top = compute_display_pixel_y(&cartographer, node.layout.padding.top);
+        geometry.margin.top = compute_display_pixel_y(&cartographer, node.layout.margin.top);
+        geometry.border.bottom = compute_display_pixel_y(&cartographer, node.layout.border.bottom);
+        geometry.padding.bottom = compute_display_pixel_y(&cartographer, node.layout.padding.bottom);
+        geometry.margin.bottom = compute_display_pixel_y(&cartographer, node.layout.margin.bottom);
+        // .clone();
+        // geometry.padding = node.layout.padding.clone();
+        // geometry.margin = node.layout.margin.clone();
     }
 
     // Handle Grid Layouts
@@ -139,7 +152,7 @@ pub fn layout(cartographer: &Cartographer, scene_graph: &SceneGraph, root: NodeI
     // Postion & Recursively lay out children
     for nx in child_indices.clone() {
         position_children(&parent, &tree[nx], &mut position);
-        println!("layout::layout {:?} {:?} {}", tree[nx], tree[nx].geometry.borrow(), nx.index());
+        println!("layout::layout {:?} {:?}", tree[nx], tree[nx].geometry.borrow());
         layout(cartographer, scene_graph, nx);
     }
 }

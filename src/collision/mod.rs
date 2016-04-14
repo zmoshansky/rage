@@ -12,11 +12,9 @@ pub struct CollisionArgs<'a> {
 // Assumes mouse move always happens before press/release.
 pub fn collision(args: &CollisionArgs, scene_graph: &SceneGraph) {
     let mut tree = scene_graph.tree.borrow_mut();
-    // let graph = tree.graph_mut();
 
     let mut dfs = petgraph::Dfs::new(tree.graph(), petgraph::graph::NodeIndex::new(ROOT));
     while let Some(node_index) = dfs.next(tree.graph()) {
-    // let node = &mut tree[node_index];
     let node = &mut tree[node_index];
 
     // OPTIMIZATION - Store a List of absolutely positioned nodes, then collision only need check those and do a DFS, skipping branches as soon as a `node.is_hover() == false`
@@ -95,9 +93,9 @@ pub fn release(args: &CollisionArgs, scene_graph: &SceneGraph) {
 fn hovering(geometry: &Geometry, cursor: &Xy) -> bool {geometry.within_border_box(cursor)}
 
 /// TODO - Clean up
-pub fn over(state: &HoverState) -> bool {
-    *state == HoverState::Hover || *state == HoverState::Down
-}
+// pub fn over(state: &HoverState) -> bool {
+//     *state == HoverState::Hover || *state == HoverState::Down
+// }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum HoverState {

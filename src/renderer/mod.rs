@@ -11,7 +11,6 @@ pub struct Renderer<'a, 'b: 'a> {
     pub context: Context,
     pub graphics: &'a mut G2d<'b>,
     pub glyphs: &'a mut Glyphs,
-    // pub types: [Box<Widget>; 2],
 }
 
 pub fn render(renderer: Renderer, scene_graph: &SceneGraph) {
@@ -24,7 +23,7 @@ pub fn render(renderer: Renderer, scene_graph: &SceneGraph) {
         // Must re-render every node higher than the dirty one...
         node.dirty.set(true);
         if node.dirty.get() {
-            scene_graph.types[node.type_id].render(Renderer{context: renderer.context, graphics: renderer.graphics, glyphs: renderer.glyphs}, &node.appearance, &node.geometry.borrow(), &node.state);
+            node.widget.render(Renderer{context: renderer.context, graphics: renderer.graphics, glyphs: renderer.glyphs}, &node.appearance, &node.geometry.borrow(), &node.state);
             node.dirty.set(false);
         }
     }

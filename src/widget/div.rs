@@ -4,10 +4,12 @@ use renderer::Renderer;
 use renderer::geometry::Geometry;
 use appearance::Appearance;
 use appearance::background::Background;
-use collision;
+// use collision;
 use appearance::color;
 
+#[derive(Default, Clone, Debug)]
 pub struct Div;
+
 fn draw(renderer: Renderer, geometry: &Geometry, color: color::Color) {
     // Background
     graphics::rectangle(color,
@@ -18,7 +20,7 @@ fn draw(renderer: Renderer, geometry: &Geometry, color: color::Color) {
 impl Widget for Div{
     /// Draws if there is a background set
     /// DEBUG - Always draws if hovering
-    fn render<'a>(&self, renderer: Renderer, appearance: &Appearance, geometry: &Geometry, state: &'a State) {
+    fn render<'a>(&self, renderer: Renderer, appearance: &Appearance, geometry: &Geometry, _state: &'a State) {
         // if collision::over(&state.hover_state) {
         //     draw(renderer, geometry, color::hex("F4433660"));
         // }
