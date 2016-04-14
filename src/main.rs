@@ -25,13 +25,13 @@ use collision::CollisionArgs;
 use renderer::{image, geometry};
 use renderer::Renderer;
 
-const WIDTH: u32 = 800;
-const HEIGHT: u32 = 600;
+const WIDTH: u32 = 958;
+const HEIGHT: u32 = 535;
 
 fn main() {
     // let window: PistonWindow =
     let window: PistonWindow<(), Sdl2Window> =
-        WindowSettings::new("Rage", [WIDTH, HEIGHT])
+        WindowSettings::new("Fedora Project - Start Page - Rage", [WIDTH, HEIGHT])
         .exit_on_esc(true).build().unwrap();
 
     // Load text
@@ -44,18 +44,23 @@ fn main() {
     // Image Cache
     let mut image_cache = image::ImageCache::default();
     image_cache.load_image_from_path(&window, "assets/images/rust.png");
+    image_cache.load_image_from_path(&window, "assets/images/yt_favicon.png");
+    image_cache.load_image_from_path(&window, "assets/images/page.png");
+    image_cache.load_image_from_path(&window, "assets/icons/close.png");
     image_cache.load_image_from_path(&window, "assets/icons/plus.png");
+    image_cache.load_image_from_path(&window, "assets/icons/icons_right.png");
     image_cache.load_image_from_path(&window, "assets/icons/left_arrow.png");
 
     // Capture mouse coordinates
     let mut cursor = geometry::Xy::default();
     let mut window_size = geometry::Xy{x: WIDTH as f64, y: HEIGHT as f64};
 
+    // Create Scene Graph
     let (mut scene_graph, _) = SceneGraph::new();
     test_fixture::web_browser(&mut scene_graph);
 
-    layout::layout_root(&Cartographer{window: &window_size, dpi: &geometry::Xy{x:96.0, y: 96.0}}, &scene_graph);
-
+    // First Layout
+    layout::layout_root(&mut Cartographer{window: &window_size, glyphs: &mut glyph_cache, images: &mut image_cache, dpi: &geometry::Xy{x:96.0, y: 96.0}}, &scene_graph);
     for e in window {
 
         if let Some(button) = e.press_args() {
@@ -87,7 +92,7 @@ fn main() {
         e.text(|text| println!("Typed '{}'", text));
         e.resize(|w, h| {
             window_size = geometry::Xy{x: w as f64, y: h as f64};
-            layout::layout_root(&Cartographer{window: &window_size, dpi: &geometry::Xy{x:96.0, y: 96.0}}, &scene_graph);
+            layout::layout_root(&mut Cartographer{window: &window_size, glyphs: &mut glyph_cache, images: &mut image_cache, dpi: &geometry::Xy{x:96.0, y: 96.0}}, &scene_graph);
             println!("Resized '{}, {}'", w, h)
         });
 

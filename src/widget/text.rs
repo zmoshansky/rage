@@ -1,10 +1,10 @@
 extern crate graphics;
 use piston_window::{Transformed};
 use widget::{Widget, State};
-use renderer::Renderer;
-use renderer::geometry::Geometry;
-use appearance::Appearance;
-use appearance::background::Background;
+use appearance;
+use layout;
+use renderer::{self, geometry};
+use graphics::character::CharacterCache;
 
 #[derive(Default, Clone, Debug)]
 pub struct Text{
@@ -12,7 +12,20 @@ pub struct Text{
 }
 
 impl Widget for Text{
-    fn render<'a>(&self, renderer: &mut Renderer, appearance: &Appearance, geometry: &Geometry, _state: &'a State) {
+    fn layout(&self, cartographer: &mut layout::Cartographer, appearance: &appearance::Appearance) -> geometry::Xy {
+        let mut size = 20.0;
+         if let Some(ref font) = appearance.font {
+            size = font.size;
+        }
+
+        geometry::Xy{
+            x: cartographer.glyphs.width(size as u32, self.text),
+            y: size
+        }
+        // unimplemented!();
+    }
+
+    fn render<'a>(&self, renderer: &mut renderer::Renderer, appearance: &appearance::Appearance, geometry: &geometry::Geometry, _state: &'a State) {
         // Determine font y-position related to size...
         // Unsure if magic numbers, specific to a font, or related to font system in rust.
         // 400:(-94..<97.249>..-100.4980)
@@ -24,12 +37,6 @@ impl Widget for Text{
         if let Some(ref font) = appearance.font {
             size = font.size;
             color = font.color;
-        }
-
-        if let Some(Background::Color(bg)) = appearance.background {
-            graphics::rectangle(bg,
-                geometry.border_box(),
-                renderer.context.transform, renderer.graphics);
         }
 
         // TODO - Font's don't render very nicely, seems partly related to sub-pixel positioning

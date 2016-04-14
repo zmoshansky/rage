@@ -14,10 +14,11 @@ pub mod box_model;
 
 
 use rose_tree::{ROOT, NodeIndex};
+use piston_window;
 
 use scene_graph::node::Node;
 use scene_graph::SceneGraph;
-use renderer::geometry;
+use renderer::{geometry, image};
 
 use layout::dimension::Dimension;
 
@@ -26,6 +27,8 @@ use layout::dimension::Dimension;
 pub struct Cartographer<'a> {
     pub window: &'a geometry::Xy,
     pub dpi: &'a geometry::Xy,
+    pub glyphs: &'a mut piston_window::Glyphs,
+    pub images: &'a image::ImageCache<'a>,
 }
 
 #[derive(Default, Clone)]
@@ -60,7 +63,7 @@ pub struct Layout {
 // A node `a` will have it's geometry set before traversing it's children; except if its dimension is of type `wrap`.
 // TODO - Special case for wrap... Probably need to return width/height of nodes
 /// Layout all of a node's children
-pub fn layout(cartographer: &Cartographer, scene_graph: &SceneGraph, root: NodeIndex) {
+pub fn layout(cartographer: &mut Cartographer, scene_graph: &SceneGraph, root: NodeIndex) {
     // BFS = FIFO Queue, DFS = Stack
     // BFS from pet_graph doesn't work since we need to know when we're done traversing a level.
     let tree = scene_graph.tree.borrow();
@@ -89,6 +92,7 @@ pub fn layout(cartographer: &Cartographer, scene_graph: &SceneGraph, root: NodeI
             Dimension::DisplayPixel(x) => Some(compute_display_pixel_x(&cartographer, x)),
             Dimension::Viewport(x) => Some(compute_viewport_x(&cartographer, x)),
             Dimension::Percent(x) => Some(compute_percent_x(parent, x)),
+            Dimension::Wrap => Some(node.widget.layout(cartographer, &node.appearance).x),
             Dimension::Grid(x) => {sum_x += x; None},
         };
         if let Some(x_dimension_pixels) = x_dimension_pixels {
@@ -99,6 +103,7 @@ pub fn layout(cartographer: &Cartographer, scene_graph: &SceneGraph, root: NodeI
             Dimension::DisplayPixel(y) => Some(compute_display_pixel_y(&cartographer, y)),
             Dimension::Viewport(y) => Some(compute_viewport_y(&cartographer, y)),
             Dimension::Percent(y) => Some(compute_percent_y(parent, y)),
+            Dimension::Wrap => Some(node.widget.layout(cartographer, &node.appearance).y),
             Dimension::Grid(y) => {sum_y += y; None},
         };
         if let Some(y_dimension_pixels) = y_dimension_pixels {
@@ -154,13 +159,16 @@ pub fn layout(cartographer: &Cartographer, scene_graph: &SceneGraph, root: NodeI
     }
 }
 
-pub fn layout_root(cartographer: &Cartographer, scene_graph: &SceneGraph) {
+pub fn layout_root(cartographer: &mut Cartographer, scene_graph: &SceneGraph) {
     layout(cartographer, scene_graph, NodeIndex::new(ROOT));
 }
 
 fn position_children(parent: &Node, node: &Node, bounding_position: &mut geometry::Xy) {
     match node.layout.position {
-        position::Position::Relative(ref _pos) => {unimplemented!();}
+        position::Position::Relative(ref pos) => {
+            set_position_x(node, parent.geometry.borrow().position.x + pos.x);
+            set_position_y(node, parent.geometry.borrow().position.y + pos.y);
+        }
         position::Position::Absolute(ref _pos) => {unimplemented!();}
         // TODO - Child cannot override flow yet.
         position::Position::Flow(ref _flow_self) => {

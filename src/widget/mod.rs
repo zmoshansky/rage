@@ -3,8 +3,9 @@ pub mod div;
 pub mod image;
 
 use renderer::Renderer;
-use renderer::geometry::Geometry;
-use appearance::Appearance;
+use renderer::geometry;
+use layout;
+use appearance;
 use collision::HoverState;
 use std::fmt::Debug;
 
@@ -15,7 +16,8 @@ pub struct State {
 
 
 pub trait Widget: WidgetClone + Debug {
-    fn render(&self, renderer: &mut Renderer, appearance: &Appearance, geometry: &Geometry, state: &State);
+    fn layout(&self, cartographer: &mut layout::Cartographer, appearance: &appearance::Appearance) -> geometry::Xy;
+    fn render(&self, renderer: &mut Renderer, appearance: &appearance::Appearance, geometry: &geometry::Geometry, state: &State);
 }
 
 // https://stackoverflow.com/questions/30353462/how-to-clone-a-struct-storing-a-trait-object

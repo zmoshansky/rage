@@ -8,6 +8,10 @@ pub struct Dimensions {
 
 #[derive(Clone)]
 pub enum Dimension {
+    /// An exact mapping to a pixel
+    // Unsure if this will be permanent
+    // Pixel(f64),
+
     /// px = dp * (dpi / 160)
     DisplayPixel(f64),
 
@@ -27,7 +31,7 @@ pub enum Dimension {
     // Just as big as item needs to be to contain children;
     // If the widget is primitive, it runs it's layout method.
     // Else, Returns 0 if it isn't a bounded quantity (ex. all children are percentage based.)
-    // Wrap,
+    Wrap,
 }
 impl Default for Dimension {fn default() -> Dimension { Dimension::Percent(1.0) }}
 // impl Default for Dimension {fn default() -> Dimension { Dimension::Flex(1.0) }}

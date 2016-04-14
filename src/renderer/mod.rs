@@ -1,4 +1,4 @@
-// extern crate gfx_device_gl;
+extern crate graphics;
 
 #[allow(dead_code)]
 pub mod geometry;
@@ -8,6 +8,7 @@ use piston_window::{Context, G2d, Glyphs};
 use rose_tree::{ROOT, petgraph};
 
 use scene_graph::SceneGraph;
+use appearance::background;
 
 
 use widget::{Widget};
@@ -29,6 +30,23 @@ pub fn render(renderer: &mut Renderer, scene_graph: &SceneGraph) {
         // Must re-render every node higher (z-axis) than the dirty one...
         node.dirty.set(true);
         if node.dirty.get() {
+
+
+            // TODO - Only renders proper if Background || Border + Background.
+            // Render Border
+            if let Some(color) = node.appearance.border {
+                graphics::rectangle(color,
+                    node.geometry.borrow().border_box(),
+                    renderer.context.transform, renderer.graphics);
+            }
+
+            // Render Background
+            if let Some(background::Background::Color(color)) = node.appearance.background {
+                graphics::rectangle(color,
+                    node.geometry.borrow().padding_box(),
+                    renderer.context.transform, renderer.graphics);
+            }
+
             node.widget.render(renderer, &node.appearance, &node.geometry.borrow(), &node.state);
             node.dirty.set(false);
         }
