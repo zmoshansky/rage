@@ -22,7 +22,6 @@ impl Widget for Text{
             x: cartographer.glyphs.width(size as u32, self.text),
             y: size
         }
-        // unimplemented!();
     }
 
     fn render<'a>(&self, renderer: &mut renderer::Renderer, appearance: &appearance::Appearance, geometry: &geometry::Geometry, _state: &'a State) {

@@ -8,10 +8,8 @@ pub mod overflow;
 pub mod flow;
 #[allow(dead_code)]
 pub mod box_model;
-// TODO
 #[allow(dead_code)]
-// pub mod spacing;
-
+pub mod spacing;
 
 use rose_tree::{ROOT, NodeIndex};
 use piston_window;
@@ -19,8 +17,6 @@ use piston_window;
 use scene_graph::node::Node;
 use scene_graph::SceneGraph;
 use renderer::{geometry, image};
-
-use layout::dimension::Dimension;
 
 /// A struct to hold constants needed for the layout engine
 // TODO - Rename to LayoutArgs
@@ -47,7 +43,6 @@ pub struct Layout {
     pub flow: flow::Flow,
 }
 
-
 // Hybrid BFS/DFS traversal.
 /// 1.) Layout(root)
 /// 2.) Layout root's children
@@ -57,93 +52,27 @@ pub struct Layout {
 /// Grid & Flex require the parent and all children.
 /// Wrap Needs a DFS.
 
-/// Overly strict criteria, If grid or flex is used... All siblings must be the same.
-// This can be relaxed later at added engine complexity.
+/// Current Restrictions:
+/// Wrap - Only valid on a primitive element
 
 // A node `a` will have it's geometry set before traversing it's children; except if its dimension is of type `wrap`.
 // TODO - Special case for wrap... Probably need to return width/height of nodes
 /// Layout all of a node's children
-pub fn layout(cartographer: &mut Cartographer, scene_graph: &SceneGraph, root: NodeIndex) {
-    // BFS = FIFO Queue, DFS = Stack
+pub fn layout(cartographer: &mut Cartographer, scene_graph: &SceneGraph, parent_index: NodeIndex) {
     // BFS from pet_graph doesn't work since we need to know when we're done traversing a level.
+    // The Margin/Border/Padding Pass must be done before Dimensions.
+    spacing::calculate(cartographer, scene_graph, parent_index);
+    dimension::calculate(cartographer, scene_graph, parent_index);
+
     let tree = scene_graph.tree.borrow();
+    let parent = &tree[parent_index];
 
-    // Special case to layout tree's root
-    let parent: &Node = &tree[root];
-    // TODO - Move special case to graph creation
-    if root.index() == ROOT {
-        set_dimension_x(parent, compute_viewport_x(&cartographer, 1.0));
-        set_dimension_y(parent, compute_viewport_y(&cartographer, 1.0));
-        set_position_x(parent, 0.0);
-        set_position_y(parent, 0.0);
-    }
-
-    let mut bfs = tree.walk_children(root);
+    let mut bfs = tree.walk_children(parent_index);
     let mut child_indices = Vec::new();
     while let Some(nx) = bfs.next(&tree) {
         child_indices.push(nx);
     }
     child_indices.reverse();
-    let (mut sum_x, mut sum_y) = (0.0, 0.0);
-
-    for nx in child_indices.clone() {
-        let node = &tree[nx];
-        let x_dimension_pixels: Option<f64> = match node.layout.dimensions.x {
-            Dimension::DisplayPixel(x) => Some(compute_display_pixel_x(&cartographer, x)),
-            Dimension::Viewport(x) => Some(compute_viewport_x(&cartographer, x)),
-            Dimension::Percent(x) => Some(compute_percent_x(parent, x)),
-            Dimension::Wrap => Some(node.widget.layout(cartographer, &node.appearance).x),
-            Dimension::Grid(x) => {sum_x += x; None},
-        };
-        if let Some(x_dimension_pixels) = x_dimension_pixels {
-            set_dimension_x(node, x_dimension_pixels);
-        }
-
-        let y_dimension_pixels: Option<f64> = match node.layout.dimensions.y {
-            Dimension::DisplayPixel(y) => Some(compute_display_pixel_y(&cartographer, y)),
-            Dimension::Viewport(y) => Some(compute_viewport_y(&cartographer, y)),
-            Dimension::Percent(y) => Some(compute_percent_y(parent, y)),
-            Dimension::Wrap => Some(node.widget.layout(cartographer, &node.appearance).y),
-            Dimension::Grid(y) => {sum_y += y; None},
-        };
-        if let Some(y_dimension_pixels) = y_dimension_pixels {
-            set_dimension_y(node, y_dimension_pixels);
-        }
-
-        // TODO - Calc and Set Border, Margins, and Padding from Layout to Geometry
-        // Assuming display pixels for now
-        let mut geometry = node.geometry.borrow_mut();
-        geometry.border.left = compute_display_pixel_x(&cartographer, node.layout.border.left);
-        geometry.padding.left = compute_display_pixel_x(&cartographer, node.layout.padding.left);
-        geometry.margin.left = compute_display_pixel_x(&cartographer, node.layout.margin.left);
-        geometry.border.right = compute_display_pixel_x(&cartographer, node.layout.border.right);
-        geometry.padding.right = compute_display_pixel_x(&cartographer, node.layout.padding.right);
-        geometry.margin.right = compute_display_pixel_x(&cartographer, node.layout.margin.right);
-
-        geometry.border.top = compute_display_pixel_y(&cartographer, node.layout.border.top);
-        geometry.padding.top = compute_display_pixel_y(&cartographer, node.layout.padding.top);
-        geometry.margin.top = compute_display_pixel_y(&cartographer, node.layout.margin.top);
-        geometry.border.bottom = compute_display_pixel_y(&cartographer, node.layout.border.bottom);
-        geometry.padding.bottom = compute_display_pixel_y(&cartographer, node.layout.padding.bottom);
-        geometry.margin.bottom = compute_display_pixel_y(&cartographer, node.layout.margin.bottom);
-    }
-
-    // Handle Grid Layouts
-    if sum_x > 0.0 || sum_y > 0.0 {
-        for nx in child_indices.clone() {
-            let node = &tree[nx];
-            if sum_x > 0.0 {
-                if let Dimension::Grid(x) = node.layout.dimensions.x {
-                    set_dimension_x(node, compute_percent_x(parent, x / sum_x));
-                }
-            }
-            if sum_y > 0.0 {
-                if let Dimension::Grid(y) = node.layout.dimensions.y {
-                    set_dimension_y(node, compute_percent_y(parent, y / sum_y));
-                }
-            }
-        }
-    }
 
     // TODO - Add dimension geometry::Xy, to account for max height,width when wrapping
     // TODO - Account for reverse flow directions
@@ -205,27 +134,3 @@ fn set_position_y(node: &Node, bounding_pos_y: f64) {
         node.dirty.set(true);
     }
 }
-
-// TODO - Account for box-model
-fn set_dimension_x(node: &Node, dimension: f64) {
-    let mut geometry = node.geometry.borrow_mut();
-    if geometry.dimensions.x != dimension {
-      geometry.dimensions.x = dimension;
-      node.dirty.set(true);
-    };
-}
-// TODO - Account for box-model
-fn set_dimension_y(node: &Node, dimension: f64) {
-    let mut geometry = node.geometry.borrow_mut();
-    if geometry.dimensions.y != dimension {
-      geometry.dimensions.y = dimension;
-      node.dirty.set(true);
-    };
-}
-
-fn compute_percent_x(parent: &Node, dimension: f64) -> f64 {dimension * (parent.geometry.borrow().dimensions.x)}
-fn compute_percent_y(parent: &Node, dimension: f64) -> f64 {dimension * (parent.geometry.borrow().dimensions.y)}
-fn compute_viewport_x(cartographer: &Cartographer, dimension: f64) -> f64 {dimension * cartographer.window.x}
-fn compute_viewport_y(cartographer: &Cartographer, dimension: f64) -> f64 {dimension * cartographer.window.y}
-fn compute_display_pixel_x(cartographer: &Cartographer, dimension: f64) -> f64 {dimension * (cartographer.dpi.x / 160.0)}
-fn compute_display_pixel_y(cartographer: &Cartographer, dimension: f64) -> f64 {dimension * (cartographer.dpi.y / 160.0)}

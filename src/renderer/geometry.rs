@@ -29,12 +29,6 @@ impl Geometry {
             padding_box[2] + self.border.left + self.border.right,
             padding_box[3] + self.border.top + self.border.bottom,
         ]
-        // [
-        //     self.position.x - self.padding.left - self.border.left,
-        //     self.position.y - self.padding.top - self.border.top,
-        //     self.border.left + self.padding.left + self.dimensions.x + self.padding.right + self.border.right,
-        //     self.border.top + self.padding.top + self.dimensions.y + self.padding.bottom + self.border.bottom,
-        // ]
     }
 
     /// [x, y, w, h]

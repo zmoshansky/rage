@@ -120,7 +120,7 @@ fn tabs(scene_graph: &mut SceneGraph, container: rose_tree::NodeIndex) {
             ..Default::default()
         },
         layout: Layout{
-            dimensions: Dimensions{x: Dimension::Wrap, y: Dimension::Wrap},
+            dimensions: Dimensions{x: Dimension::Flex(1.0), y: Dimension::Wrap},
             margin: geometry::Spacing{top: 8.0, left: 8.0, ..Default::default()},
             ..Default::default()
         },
@@ -136,7 +136,7 @@ fn tabs(scene_graph: &mut SceneGraph, container: rose_tree::NodeIndex) {
     scene_graph.add_child(tab_0, Box::new(Node{
         layout: Layout{
             dimensions: Dimensions{x: Dimension::Wrap, y: Dimension::Wrap},
-            margin: geometry::Spacing{left: 40.0, top: 10.0, ..Default::default()},
+            margin: geometry::Spacing{top: 10.0, right: 8.0, ..Default::default()},
             ..Default::default()
         },
         widget: Box::new(image::Image{path: "assets/icons/close.png"}),
@@ -161,7 +161,7 @@ fn tabs(scene_graph: &mut SceneGraph, container: rose_tree::NodeIndex) {
     scene_graph.add_child(tab_1, Box::new(Node{
         layout: Layout{
             dimensions: Dimensions{x: Dimension::Wrap, y: Dimension::Wrap},
-            margin: geometry::Spacing{left: 180.0, top: 10.0, ..Default::default()},
+            margin: geometry::Spacing{top: 10.0, right: 8.0, ..Default::default()},
             ..Default::default()
         },
         widget: Box::new(image::Image{path: "assets/icons/close.png"}),
@@ -194,7 +194,7 @@ fn address_bar(scene_graph: &mut SceneGraph, container: rose_tree::NodeIndex) {
             ..Default::default()
         },
         layout: Layout{
-            dimensions: Dimensions{x: Dimension::Percent(0.48), y: Dimension::Wrap},
+            dimensions: Dimensions{x: Dimension::Flex(1.0), y: Dimension::Wrap},
             margin: geometry::Spacing{top: 14.0, bottom: 14.0, left: 50.0, ..Default::default()},
             padding: geometry::Spacing{top: 6.0, left: 24.0, bottom: 6.0, right: 6.0},
             ..Default::default()
@@ -216,7 +216,7 @@ fn address_bar(scene_graph: &mut SceneGraph, container: rose_tree::NodeIndex) {
         },
         layout: Layout{
             dimensions: Dimensions{x: Dimension::Percent(0.18), y: Dimension::Wrap},
-            margin: geometry::Spacing{top: 14.0, bottom: 14.0, left: 15.0, ..Default::default()},
+            margin: geometry::Spacing{top: 14.0, bottom: 14.0, left: 16.0, ..Default::default()},
             padding: geometry::Spacing{top: 6.0, left: 6.0, bottom: 6.0, right: 6.0},
             ..Default::default()
         },
@@ -228,7 +228,7 @@ fn address_bar(scene_graph: &mut SceneGraph, container: rose_tree::NodeIndex) {
     scene_graph.add_child(address_bar, Box::new(Node{
         layout: Layout{
             dimensions: Dimensions{x: Dimension::Wrap, y: Dimension::Wrap},
-            margin: geometry::Spacing{left: 8.0, ..Default::default()},
+            margin: geometry::Spacing{left: 16.0, right: 16.0, ..Default::default()},
             ..Default::default()
         },
         widget: Box::new(image::Image{path: "assets/icons/icons_right.png"}),
