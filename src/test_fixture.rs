@@ -1,3 +1,5 @@
+use rose_tree;
+
 // Individually import items to determine what's needed. Later group so glob imports can be used.
 use layout::Layout;
 use layout::{flow, position};
@@ -6,11 +8,14 @@ use renderer::geometry;
 use scene_graph::node::Node;
 use scene_graph::SceneGraph;
 use widget::{text, image};
-use appearance::Appearance;
+use appearance::{Appearance, background};
 use appearance::background::Background;
 use appearance::color;
 use appearance::font::Font;
-use rose_tree;
+use style;
+use collision;
+// ::{Appearance, AppearanceRule, RuleType, Rule};
+
 
 // https://www.google.com/design/spec/style/color.html#color-color-palette
 pub fn web_browser(scene_graph: &mut SceneGraph) {
@@ -90,12 +95,18 @@ fn tabs(scene_graph: &mut SceneGraph, container: rose_tree::NodeIndex) {
             padding: geometry::Spacing{top: 4.0, left: 8.0, bottom: 4.0, ..Default::default()},
             ..Default::default()
         },
-        appearance: Appearance{
-            border: Some(color::hex("d0d1cf")),
+        style_rules: vec![
             // Workaround for partial border render implementation
-            background: Some(Background::Color(color::hex("393f3f"))),
-            ..Default::default()
-        },
+            style::Rule::new(None, style::RuleType::Appearance(style::AppearanceRule::Background(background::Background::Color(color::hex("393f3f"))))),
+            style::Rule::new(None, style::RuleType::Appearance(style::AppearanceRule::Border(color::hex("d0d1cf")))),
+            style::Rule::new(None, style::RuleType::Layout(style::LayoutRule::Border(geometry::Spacing{left: 2.0, ..Default::default()}))),
+            style::Rule::new(None, style::RuleType::Layout(style::LayoutRule::Margin(geometry::Spacing{top: 4.0, bottom: 4.0, left: 8.0, ..Default::default()}))),
+            style::Rule::new(None, style::RuleType::Layout(style::LayoutRule::Padding(geometry::Spacing{top: 4.0, left: 8.0, bottom: 4.0, ..Default::default()}))),
+            style::Rule::new(None, style::RuleType::Layout(style::LayoutRule::Dimensions(Dimensions{x: Dimension::Wrap, y: Dimension::Wrap}))),
+
+            // For now, conditional rules must come after others
+            style::Rule::new(Some(collision::HoverState::Hover), style::RuleType::Appearance(style::AppearanceRule::Background(background::Background::Color(color::hex("949898"))))),
+        ],
         widget: Box::new(image::Image{path: "assets/icons/plus.png"}),
         ..Default::default()
     }));
@@ -127,28 +138,30 @@ fn tabs(scene_graph: &mut SceneGraph, container: rose_tree::NodeIndex) {
         ..Default::default()
     };
 
+    let tab_close = Node{
+        style_rules: vec![
+            style::Rule::new(None, style::RuleType::Layout(style::LayoutRule::Dimensions(Dimensions{x: Dimension::Wrap, y: Dimension::Wrap}))),
+            style::Rule::new(None, style::RuleType::Layout(style::LayoutRule::Margin(geometry::Spacing{top: 6.0, right: 8.0, ..Default::default()}))),
+            style::Rule::new(None, style::RuleType::Layout(style::LayoutRule::Padding(geometry::Spacing{top: 4.0, left: 4.0, bottom: 4.0, right: 4.0}))),
+
+            // For now, conditional rules must come after others
+            style::Rule::new(Some(collision::HoverState::Hover), style::RuleType::Appearance(style::AppearanceRule::Background(background::Background::Color([1.0, 0.0, 0.0, 1.0])))),
+        ],
+        widget: Box::new(image::Image{path: "assets/icons/close.png"}),
+        ..Default::default()
+    };
+
     // Tab 0
     let mut tab_0_text = tab_text.clone();
     tab_0_text.widget = Box::new(text::Text{text: "Fedora Project - Start Page"});
     scene_graph.add_child(tab_0, Box::new(tab_0_text));
-
-
-    scene_graph.add_child(tab_0, Box::new(Node{
-        layout: Layout{
-            dimensions: Dimensions{x: Dimension::Wrap, y: Dimension::Wrap},
-            margin: geometry::Spacing{top: 10.0, right: 8.0, ..Default::default()},
-            ..Default::default()
-        },
-        widget: Box::new(image::Image{path: "assets/icons/close.png"}),
-        ..Default::default()
-    }));
+    scene_graph.add_child(tab_0, Box::new(tab_close.clone()));
 
     // Tab 1
     scene_graph.add_child(tab_1, Box::new(Node{
-        layout: Layout{
-            dimensions: Dimensions{x: Dimension::DisplayPixel(32.0), y: Dimension::DisplayPixel(32.0)},
-            ..Default::default()
-        },
+        style_rules: vec![
+            style::Rule::new(None, style::RuleType::Layout(style::LayoutRule::Dimensions(Dimensions{x: Dimension::DisplayPixel(32.0), y: Dimension::DisplayPixel(32.0)}))),
+        ],
         widget: Box::new(image::Image{path: "assets/images/yt_favicon.png"}),
         ..Default::default()
     }));
@@ -156,17 +169,8 @@ fn tabs(scene_graph: &mut SceneGraph, container: rose_tree::NodeIndex) {
     let mut tab_1_text = tab_text.clone();
     tab_1_text.widget = Box::new(text::Text{text: "YouTube"});
     scene_graph.add_child(tab_1, Box::new(tab_1_text));
+    scene_graph.add_child(tab_1, Box::new(tab_close.clone()));
 
-
-    scene_graph.add_child(tab_1, Box::new(Node{
-        layout: Layout{
-            dimensions: Dimensions{x: Dimension::Wrap, y: Dimension::Wrap},
-            margin: geometry::Spacing{top: 10.0, right: 8.0, ..Default::default()},
-            ..Default::default()
-        },
-        widget: Box::new(image::Image{path: "assets/icons/close.png"}),
-        ..Default::default()
-    }));
 }
 
 fn address_bar(scene_graph: &mut SceneGraph, container: rose_tree::NodeIndex) {

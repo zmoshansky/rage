@@ -1,6 +1,7 @@
 pub mod node;
 
 use std::cell::RefCell;
+use std::cell::Cell;
 use std::boxed::Box;
 
 use rose_tree::{RoseTree, NodeIndex, ROOT};
@@ -15,6 +16,7 @@ pub struct SceneGraph {
   // TODO - [list|iterable map] of weak references to Nodes that are absolutely positioned.
   // pub absolute: Vec<Node,
   pub id_counter: u32,
+  pub needs_layout: Cell<bool>
 }
 
 impl SceneGraph {
@@ -27,7 +29,7 @@ impl SceneGraph {
           },
           ..Default::default()
         });
-        (SceneGraph{tree:  RefCell::new(tree), id_counter: 1}, root)
+        (SceneGraph{tree:  RefCell::new(tree), id_counter: 1, needs_layout: Cell::new(true)}, root)
     }
     pub fn add_child(&mut self, root: NodeIndex, node: Box<Node>) -> NodeIndex {
         let mut moved_node = *node;

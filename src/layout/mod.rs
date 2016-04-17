@@ -29,7 +29,7 @@ pub struct Cartographer<'a> {
 
 #[derive(Default, Clone)]
 pub struct Layout {
-    pub overflows: overflow::Overflows,
+    // pub overflows: overflow::Overflows,
     pub dimensions: dimension::Dimensions,
     pub position: position::Position,
 
@@ -37,7 +37,7 @@ pub struct Layout {
     pub margin: geometry::Spacing,
     pub padding: geometry::Spacing,
 
-    pub box_model: box_model::BoxModel,
+    // pub box_model: box_model::BoxModel,
 
     /// Containers
     pub flow: flow::Flow,

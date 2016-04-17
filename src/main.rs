@@ -11,6 +11,7 @@ use piston::input::*;
 use sdl2_window::Sdl2Window;
 
 mod scene_graph;
+mod style;
 mod widget;
 mod renderer;
 mod appearance;
@@ -107,9 +108,16 @@ fn main() {
             }
         };
 
-        // e.update(|_| {
-        //     println!("Update");
-        // });
+        e.update(|_| {
+            // TODO - Add Flag to note when style has changed.
+            style::style(&scene_graph);
+            if scene_graph.needs_layout.get() {
+                layout::layout_root(&mut Cartographer{window: &window_size, glyphs: &mut glyph_cache, images: &mut image_cache, dpi: &geometry::Xy{x:96.0, y: 96.0}}, &scene_graph);
+                scene_graph.needs_layout.set(false);
+            }
+            // println!("Update");
+        });
+
         e.draw_2d(|c, g| {
             renderer::render(&mut Renderer{context: c, graphics: g, glyphs: &mut glyph_cache, images: &mut image_cache}, &scene_graph);
         });

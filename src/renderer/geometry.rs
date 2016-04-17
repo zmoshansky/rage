@@ -69,7 +69,7 @@ impl fmt::Debug for Geometry {
 }
 
 
-#[derive(Default, Clone, Debug)]
+#[derive(Default, Clone, PartialEq, Debug)]
 pub struct Xyz {
     pub x: f64,
     pub y: f64,
@@ -77,7 +77,7 @@ pub struct Xyz {
     // pub z: f64,
 }
 
-#[derive(Default, Clone, Debug)]
+#[derive(Default, Clone, PartialEq, Debug)]
 pub struct Spacing {
     pub top: f64,
     pub bottom: f64,

@@ -1,6 +1,6 @@
 use appearance::color::Color;
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Debug)]
 pub struct Font {
     pub size: f64,
     pub color: Color,
@@ -9,7 +9,7 @@ pub struct Font {
     pub decoration: Option<Vec<FontDecoration>>
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum FontDecoration {
     Bold,
     Underline,

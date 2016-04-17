@@ -1,4 +1,4 @@
-#[derive(Default, Clone)]
+#[derive(Default, Clone, PartialEq, Debug)]
 pub struct Flow {
     pub direction: Direction,
     pub x: FlowAxisType,
@@ -7,7 +7,7 @@ pub struct Flow {
     // z: FlowAxisType,
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum FlowSelfType {
     /// Causes flow to break before and restart after this item
     Block,
@@ -27,14 +27,14 @@ pub enum FlowSelfType {
 }
 impl Default for FlowSelfType {fn default() -> FlowSelfType { FlowSelfType::Block }}
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum Alignment {
     Start,
     Center,
     End,
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum FlowAxisType {
     Start,
     Center,
@@ -46,7 +46,7 @@ pub enum FlowAxisType {
 }
 impl Default for FlowAxisType {fn default() -> FlowAxisType { FlowAxisType::Start }}
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum Direction {
     Right,
     Left,

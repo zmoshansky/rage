@@ -4,7 +4,7 @@ use renderer::geometry;
 use rose_tree::{ROOT, NodeIndex};
 use layout::{Cartographer, position};
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, PartialEq, Debug)]
 pub struct Dimensions {
     pub x: Dimension,
     pub y: Dimension,
@@ -12,7 +12,7 @@ pub struct Dimensions {
     // pub z: Dimension,
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum Dimension {
     /// An exact mapping to a pixel
     // Unsure if this will be permanent

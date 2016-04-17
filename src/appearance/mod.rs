@@ -8,7 +8,7 @@ pub mod color;
 use appearance::font::Font;
 use appearance::background::Background;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Appearance {
     // pub filters: Option<Vec<Filters>>,
 
