@@ -27,7 +27,7 @@ pub struct Cartographer<'a> {
     pub images: &'a image::ImageCache<'a>,
 }
 
-#[derive(Default, Clone)]
+#[derive(Default, PartialEq, Clone)]
 pub struct Layout {
     // pub overflows: overflow::Overflows,
     pub dimensions: dimension::Dimensions,

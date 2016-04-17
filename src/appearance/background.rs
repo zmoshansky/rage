@@ -1,6 +1,6 @@
 use appearance::color::Color;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum Background{
     Color(Color),
     // TODO

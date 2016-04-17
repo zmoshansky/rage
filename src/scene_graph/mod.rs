@@ -16,6 +16,9 @@ pub struct SceneGraph {
   // TODO - [list|iterable map] of weak references to Nodes that are absolutely positioned.
   // pub absolute: Vec<Node,
   pub id_counter: u32,
+
+  // TODO - Move to a list of nodes that need layout. Then decide if whole tree needs to be re-laid out, or just parts
+  // Probably do the same with rendering
   pub needs_layout: Cell<bool>
 }
 

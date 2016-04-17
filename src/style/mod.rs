@@ -35,9 +35,16 @@ pub struct Rule {
     pub effect: RuleType,
 }
 impl Rule {
-    pub fn new(condition: Option<collision::HoverState>, effect: RuleType) -> Rule {
+    pub fn new(effect: RuleType) -> Rule {
         Rule{
-            condition: condition,
+            condition: None,
+            effect: effect,
+        }
+    }
+
+    pub fn new_with_condition(condition: collision::HoverState, effect: RuleType) -> Rule {
+        Rule{
+            condition: Some(condition),
             effect: effect,
         }
     }
@@ -94,10 +101,13 @@ pub fn style(scene_graph: &SceneGraph) {
 
         // Temporary condition
         if !node.style_rules.is_empty() {
-            // TODO, just borrow layout in same way as done with appearance.
+
+            // We create and re-evaluate so that defaults can be observed with conditional rules.
             let mut appearance = appearance::Appearance::default();
+            let mut layout = layout::Layout::default();
 
             // TODO - Ensure a conditioned rule overrides a non-conditioned rule if the condition evaluates to true
+
             for rule in &node.style_rules {
                 if rule.evaluate_condition(node) {
                     // println!("Evaluated Style Rules {:?}", appearance);
@@ -107,65 +117,30 @@ pub fn style(scene_graph: &SceneGraph) {
                             match appearance_rule {
                                 &AppearanceRule::Background(ref background) => {appearance.background = Some(background.clone());},
                                 &AppearanceRule::Border(ref border) => {appearance.border = Some(border.clone());},
-                                _ => {unimplemented!();}
+                                &AppearanceRule::Font(ref font) => {appearance.font = Some(font.clone());},
                             }
                         },
                         RuleType::Layout(ref layout_rule) => {
                             match layout_rule {
-                                &LayoutRule::Margin(ref margin) => {set_layout_margin(&mut node.layout, margin, scene_graph);},
-                                &LayoutRule::Border(ref border) => {set_layout_border(&mut node.layout, border, scene_graph);},
-                                &LayoutRule::Padding(ref padding) => {set_layout_padding(&mut node.layout, padding, scene_graph);},
-                                &LayoutRule::Dimensions(ref dimensions) => {set_layout_dimensions(&mut node.layout, dimensions, scene_graph);},
-                                &LayoutRule::Position(ref position) => {set_layout_position(&mut node.layout, position, scene_graph);},
-                                &LayoutRule::Flow(ref flow) => {set_layout_flow(&mut node.layout, flow, scene_graph);},
+                                &LayoutRule::Margin(ref margin) => {layout.margin = margin.clone();},
+                                &LayoutRule::Border(ref border) => {layout.border = border.clone();},
+                                &LayoutRule::Padding(ref padding) => {layout.padding = padding.clone();},
+                                &LayoutRule::Dimensions(ref dimensions) => {layout.dimensions = dimensions.clone();},
+                                &LayoutRule::Position(ref position) => {layout.position = position.clone();},
+                                &LayoutRule::Flow(ref flow) => {layout.flow = flow.clone();},
                             }
                         },
                     }
                 }
             }
-            node.appearance = appearance;
+            if node.layout != layout {
+                node.layout = layout;
+                scene_graph.needs_layout.set(true);
+            }
+            if node.appearance != appearance {
+                node.appearance = appearance;
+                node.dirty.set(true);
+            }
         }
-    }
-}
-
-fn set_layout_margin(layout: &mut layout::Layout, margin: &geometry::Spacing, scene_graph: &SceneGraph) {
-    if layout.margin != *margin {
-        layout.margin = margin.clone();
-        scene_graph.needs_layout.set(true);
-    }
-}
-
-fn set_layout_border(layout: &mut layout::Layout, border: &geometry::Spacing, scene_graph: &SceneGraph) {
-    if layout.border != *border {
-        layout.border = border.clone();
-        scene_graph.needs_layout.set(true);
-    }
-}
-
-fn set_layout_padding(layout: &mut layout::Layout, padding: &geometry::Spacing, scene_graph: &SceneGraph) {
-    if layout.padding != *padding {
-        layout.padding = padding.clone();
-        scene_graph.needs_layout.set(true);
-    }
-}
-
-fn set_layout_dimensions(layout: &mut layout::Layout, dimensions: &dimension::Dimensions, scene_graph: &SceneGraph) {
-    if layout.dimensions != *dimensions {
-        layout.dimensions = dimensions.clone();
-        scene_graph.needs_layout.set(true);
-    }
-}
-
-fn set_layout_position(layout: &mut layout::Layout, position: &position::Position, scene_graph: &SceneGraph) {
-    if layout.position != *position {
-        layout.position = position.clone();
-        scene_graph.needs_layout.set(true);
-    }
-}
-
-fn set_layout_flow(layout: &mut layout::Layout, flow: &flow::Flow, scene_graph: &SceneGraph) {
-    if layout.flow != *flow {
-        layout.flow = flow.clone();
-        scene_graph.needs_layout.set(true);
     }
 }
