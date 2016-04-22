@@ -1,5 +1,3 @@
-use std::cell::RefCell;
-
 use scene_graph::SceneGraph;
 use renderer::geometry;
 use rose_tree::{ROOT, NodeIndex};
@@ -23,7 +21,7 @@ pub fn calculate(cartographer: &mut Cartographer, scene_graph: &SceneGraph, pare
     if parent_index.index() == ROOT {
         let mut tree = scene_graph.tree.borrow_mut();
         let parent = &mut tree[parent_index];
-        parent.geometry = RefCell::new(geometry::Geometry::default());
+        *parent.geometry.borrow_mut() = geometry::Geometry::default();
     }
 
     let tree = scene_graph.tree.borrow();
@@ -34,18 +32,18 @@ pub fn calculate(cartographer: &mut Cartographer, scene_graph: &SceneGraph, pare
         let node = &tree[nx];
         let mut geometry = node.geometry.borrow_mut();
 
-        geometry.border.left = dimension::compute_display_pixel_x(&cartographer, node.layout.border.left);
-        geometry.padding.left = dimension::compute_display_pixel_x(&cartographer, node.layout.padding.left);
-        geometry.margin.left = dimension::compute_display_pixel_x(&cartographer, node.layout.margin.left);
-        geometry.border.right = dimension::compute_display_pixel_x(&cartographer, node.layout.border.right);
-        geometry.padding.right = dimension::compute_display_pixel_x(&cartographer, node.layout.padding.right);
-        geometry.margin.right = dimension::compute_display_pixel_x(&cartographer, node.layout.margin.right);
+        geometry.border.left = dimension::compute_display_pixel_x(&cartographer, node.layout.borrow().border.left);
+        geometry.padding.left = dimension::compute_display_pixel_x(&cartographer, node.layout.borrow().padding.left);
+        geometry.margin.left = dimension::compute_display_pixel_x(&cartographer, node.layout.borrow().margin.left);
+        geometry.border.right = dimension::compute_display_pixel_x(&cartographer, node.layout.borrow().border.right);
+        geometry.padding.right = dimension::compute_display_pixel_x(&cartographer, node.layout.borrow().padding.right);
+        geometry.margin.right = dimension::compute_display_pixel_x(&cartographer, node.layout.borrow().margin.right);
 
-        geometry.border.top = dimension::compute_display_pixel_y(&cartographer, node.layout.border.top);
-        geometry.padding.top = dimension::compute_display_pixel_y(&cartographer, node.layout.padding.top);
-        geometry.margin.top = dimension::compute_display_pixel_y(&cartographer, node.layout.margin.top);
-        geometry.border.bottom = dimension::compute_display_pixel_y(&cartographer, node.layout.border.bottom);
-        geometry.padding.bottom = dimension::compute_display_pixel_y(&cartographer, node.layout.padding.bottom);
-        geometry.margin.bottom = dimension::compute_display_pixel_y(&cartographer, node.layout.margin.bottom);
+        geometry.border.top = dimension::compute_display_pixel_y(&cartographer, node.layout.borrow().border.top);
+        geometry.padding.top = dimension::compute_display_pixel_y(&cartographer, node.layout.borrow().padding.top);
+        geometry.margin.top = dimension::compute_display_pixel_y(&cartographer, node.layout.borrow().margin.top);
+        geometry.border.bottom = dimension::compute_display_pixel_y(&cartographer, node.layout.borrow().border.bottom);
+        geometry.padding.bottom = dimension::compute_display_pixel_y(&cartographer, node.layout.borrow().padding.bottom);
+        geometry.margin.bottom = dimension::compute_display_pixel_y(&cartographer, node.layout.borrow().margin.bottom);
     }
 }

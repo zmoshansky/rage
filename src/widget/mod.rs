@@ -10,7 +10,8 @@ use collision::HoverState;
 use std::fmt::Debug;
 
 #[derive(Default, Clone)]
-pub struct State {
+pub struct State<'a> {
+    pub id: &'a str,
     pub hover_state: HoverState,
 }
 

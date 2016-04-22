@@ -7,7 +7,7 @@ pub mod image;
 use piston_window::{Context, G2d, Glyphs};
 use rose_tree::{ROOT, petgraph};
 
-use scene_graph::SceneGraph;
+use scene_graph::{SceneGraph, node};
 use appearance::background;
 
 
@@ -21,34 +21,37 @@ pub struct Renderer<'a, 'b: 'a> {
 }
 
 pub fn render(renderer: &mut Renderer, scene_graph: &SceneGraph) {
-    let tree = scene_graph.tree.borrow();
-    let dfs = petgraph::DfsIter::new(tree.graph(), petgraph::graph::NodeIndex::new(ROOT));
-    for node_index in dfs {
-        let node = &tree[node_index];
-        // TODO - Figure out occlusion, proper rendering based on z-index, handling opacity.
-        // Intermediate Optimization - Set dirty for entire tree.
-        // Must re-render every node higher (z-axis) than the dirty one...
-        node.dirty.set(true);
-        if node.dirty.get() {
+    // TODO - Pre-Render pass to determine occlusion, proper rendering based on z-index, handling opacity, re-rendering higher (z-axis) nodes.
+    if scene_graph.render_pass_required() {
+        scene_graph.debug_print_render_nodes();
 
-
-            // TODO - Only renders proper if Background || Border + Background.
-            // Render Border
-            if let Some(color) = node.appearance.border {
-                graphics::rectangle(color,
-                    node.geometry.borrow().border_box(),
-                    renderer.context.transform, renderer.graphics);
-            }
-
-            // Render Background
-            if let Some(background::Background::Color(color)) = node.appearance.background {
-                graphics::rectangle(color,
-                    node.geometry.borrow().padding_box(),
-                    renderer.context.transform, renderer.graphics);
-            }
-
-            node.widget.render(renderer, &node.appearance, &node.geometry.borrow(), &node.state);
-            node.dirty.set(false);
+        // TODO - Use render list instead of doing entire tree
+        // See style::style
+        let tree = scene_graph.tree.borrow();
+        let dfs = petgraph::DfsIter::new(tree.graph(), petgraph::graph::NodeIndex::new(ROOT));
+        for node_index in dfs {
+            let node = &tree[node_index];
+            render_node(renderer, node);
         }
+        scene_graph.temp_render_complete();
     }
+}
+
+fn render_node<'a>(renderer: &mut Renderer, node: &node::Node) {
+    // TODO - Only renders proper if Background || Border + Background.
+    // Render Border
+    if let Some(color) = node.appearance.borrow().border {
+        graphics::rectangle(color,
+            node.geometry.borrow().border_box(),
+            renderer.context.transform, renderer.graphics);
+    }
+
+    // Render Background
+    if let Some(background::Background::Color(color)) = node.appearance.borrow().background {
+        graphics::rectangle(color,
+            node.geometry.borrow().padding_box(),
+            renderer.context.transform, renderer.graphics);
+    }
+
+    node.widget.render(renderer, &node.appearance.borrow(), &node.geometry.borrow(), &node.state.borrow());
 }

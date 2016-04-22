@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use scene_graph::node::Node;
 use scene_graph::SceneGraph;
 use renderer::geometry;
@@ -48,8 +50,8 @@ pub fn calculate(cartographer: &mut Cartographer, scene_graph: &SceneGraph, pare
 
     // Special case to layout tree's root
     if parent_index.index() == ROOT {
-        set_dimension_x(parent, compute_viewport_x(&cartographer, 1.0));
-        set_dimension_y(parent, compute_viewport_y(&cartographer, 1.0));
+        set_dimension_x(parent, compute_viewport_x(&cartographer, 1.0), scene_graph);
+        set_dimension_y(parent, compute_viewport_y(&cartographer, 1.0), scene_graph);
     }
 
     // TODO - Doesn't account for overflow
@@ -63,42 +65,42 @@ pub fn calculate(cartographer: &mut Cartographer, scene_graph: &SceneGraph, pare
     let mut bfs = tree.walk_children(parent_index);
     while let Some(nx) = bfs.next(&tree) {
         let node = &tree[nx];
-        let x_dimension_pixels: Option<f64> = match node.layout.dimensions.x {
+        let x_dimension_pixels: Option<f64> = match node.layout.borrow().dimensions.x {
             Dimension::DisplayPixel(x) => Some(compute_display_pixel_x(&cartographer, x)),
             Dimension::Viewport(x) => Some(compute_viewport_x(&cartographer, x)),
             Dimension::Percent(x) => Some(compute_percent(parent_dimensions.x, x)),
-            Dimension::Wrap => Some(node.widget.layout(cartographer, &node.appearance).x),
+            Dimension::Wrap => Some(node.widget.layout(cartographer, &node.appearance.borrow()).x),
             Dimension::Grid(x) => {flex_units.x += x; None},
             Dimension::Flex(x) => {
                 flex_units.x += x;
-                Some(node.widget.layout(cartographer, &node.appearance).x)
+                Some(node.widget.layout(cartographer, &node.appearance.borrow()).x)
             },
         };
         if let Some(x_dimension_pixels) = x_dimension_pixels {
-            set_dimension_x(node, x_dimension_pixels);
+            set_dimension_x(node, x_dimension_pixels, scene_graph);
 
             // Only flowed items take up space from free_space_dimensions.
-            if let position::Position::Flow(_) = node.layout.position {
+            if let position::Position::Flow(_) = node.layout.borrow().position {
                 free_space_dimensions.x -= node.geometry.borrow().bounding_dimensions().x;
             }
         }
 
-        let y_dimension_pixels: Option<f64> = match node.layout.dimensions.y {
+        let y_dimension_pixels: Option<f64> = match node.layout.borrow().dimensions.y {
             Dimension::DisplayPixel(y) => Some(compute_display_pixel_y(&cartographer, y)),
             Dimension::Viewport(y) => Some(compute_viewport_y(&cartographer, y)),
             Dimension::Percent(y) => Some(compute_percent(parent_dimensions.y, y)),
-            Dimension::Wrap => Some(node.widget.layout(cartographer, &node.appearance).y),
+            Dimension::Wrap => Some(node.widget.layout(cartographer, &node.appearance.borrow()).y),
             Dimension::Grid(y) => {flex_units.y += y; None},
             Dimension::Flex(y) => {
                 flex_units.y += y;
-                Some(node.widget.layout(cartographer, &node.appearance).y)
+                Some(node.widget.layout(cartographer, &node.appearance.borrow()).y)
             },
         };
         if let Some(y_dimension_pixels) = y_dimension_pixels {
-            set_dimension_y(node, y_dimension_pixels);
+            set_dimension_y(node, y_dimension_pixels, scene_graph);
 
             // Only flowed items take up space from free_space_dimensions.
-            if let position::Position::Flow(_) = node.layout.position {
+            if let position::Position::Flow(_) = node.layout.borrow().position {
                 free_space_dimensions.y -= node.geometry.borrow().bounding_dimensions().y;
             }
         }
@@ -116,21 +118,21 @@ pub fn calculate(cartographer: &mut Cartographer, scene_graph: &SceneGraph, pare
         while let Some(nx) = bfs.next(&tree) {
             let node = &tree[nx];
             if flex_units.x > 0.0 {
-                match node.layout.dimensions.x {
-                    Dimension::Grid(x) => {set_dimension_x(node, compute_percent(free_space_dimensions.x, x / flex_units.x))},
+                match node.layout.borrow().dimensions.x {
+                    Dimension::Grid(x) => {set_dimension_x(node, compute_percent(free_space_dimensions.x, x / flex_units.x), scene_graph)},
                     Dimension::Flex(x) => {
                         let existing_x = node.geometry.borrow().dimensions.x;
-                        set_dimension_x(node, existing_x + compute_percent(free_space_dimensions.x, x / flex_units.x))
+                        set_dimension_x(node, existing_x + compute_percent(free_space_dimensions.x, x / flex_units.x), scene_graph)
                     }
                     _ => {},
                 }
             }
             if flex_units.y > 0.0 {
-                match node.layout.dimensions.y {
-                    Dimension::Grid(y) => {set_dimension_y(node, compute_percent(free_space_dimensions.y, y / flex_units.y))},
+                match node.layout.borrow().dimensions.y {
+                    Dimension::Grid(y) => {set_dimension_y(node, compute_percent(free_space_dimensions.y, y / flex_units.y), scene_graph)},
                     Dimension::Flex(y) => {
                         let existing_y = node.geometry.borrow().dimensions.y;
-                        set_dimension_y(node, existing_y + compute_percent(free_space_dimensions.y, y / flex_units.y))
+                        set_dimension_y(node, existing_y + compute_percent(free_space_dimensions.y, y / flex_units.y), scene_graph)
                     }
                     _ => {},
                 }
@@ -141,19 +143,19 @@ pub fn calculate(cartographer: &mut Cartographer, scene_graph: &SceneGraph, pare
 
 // TODO - Account for box-model
 // TODO - Dirty checking here is useless for flex since we first set its dimension based on wrap, then add any leftover space in a second pass.
-fn set_dimension_x(node: &Node, dimension: f64) {
+fn set_dimension_x<'a>(node: &Rc<Node<'a>>, dimension: f64, scene_graph: &SceneGraph<'a>) {
     let mut geometry = node.geometry.borrow_mut();
     if geometry.dimensions.x != dimension {
       geometry.dimensions.x = dimension;
-      node.dirty.set(true);
+      scene_graph.render(node);
     };
 }
 // TODO - Account for box-model
-fn set_dimension_y(node: &Node, dimension: f64) {
+fn set_dimension_y<'a>(node: &Rc<Node<'a>>, dimension: f64, scene_graph: &SceneGraph<'a>) {
     let mut geometry = node.geometry.borrow_mut();
     if geometry.dimensions.y != dimension {
       geometry.dimensions.y = dimension;
-      node.dirty.set(true);
+      scene_graph.render(node);
     };
 }
 

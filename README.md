@@ -10,16 +10,31 @@ This layout is defined in `src/test_fixture.rs`.
 SDL, Piston
 
 ### Built With
-rustc 1.8.0-beta.2 (2879d940a 2016-03-22)
-cargo 0.9.0-nightly (8fc3fd8 2016-02-29)
+This is currently only needed due to a reliance on the unstable `rc_counts` (see scene_graph) for debugging purposes.
+rustc 1.10.0-nightly (a0c325980 2016-04-20)
+cargo 0.11.0-nightly (bf3f531 2016-04-20)
 
 # Performance
-So far pretty good (Tested on Fedora 23 x64 Laptop - i7-4700HQ, 8GB).
-`renderer` is set to re-render everything every frame until Z depth, change heirarchies, and occlusion are worked out.
-2-4% CPU, ~9MB RAM (remove images and this drops to ~1-2%).
+So far pretty good (Tested on Fedora 23 x64 Laptop - i7-4700HQ, 8GB). This is just intended for a very rough idea of performance, actual benchmarking needed later.
 
-With "forced rendering" off, it will display if you don't interact with anything (hover incl.)
-0% CPU, ~9MB RAM
+The entire tree is [rendered|layed out] if a single node needs [rendering|lay out].
+Needs Z depth, change heirarchies, and occlusion fixed to handle this.
+
+#### Idle Usage
+- Idle being defined as application running, with focus, and the mouse hovering without moving.
+- `Baseline` is a piston application that does nothing (launches window, no renders).
+- `Rage` is the rage::web_browser test fixture.
+- Reference `gnome-calculator` - 5.3% CPU, ~12.9MiB RAM
+
+##### Debug
+Baseline  - 1.3% CPU, ~9.9MiB RAM
+Rage      - 1.3% CPU, ~10.3MiB RAM
+
+##### Release
+Baseline  - 0.7% CPU, ~9.9MiB RAM
+Rage      - 0.7% CPU, ~10.3MiB RAM
+
+
 
 # Architecture
 This is likely out of date since so much is changing, but it gives the rough idea.

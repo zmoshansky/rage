@@ -65,9 +65,9 @@ fn tabs(scene_graph: &mut SceneGraph, container: rose_tree::NodeIndex) {
     };
 
     // Tabs
-    let mut tab_0 = tab.clone();
-    tab_0.appearance.background = Some(Background::Color(color::hex("949898")));
-    tab_0.layout.margin = geometry::Spacing{top: 4.0, left: 20.0, right: 4.0, bottom: 0.0};
+    let tab_0 = tab.clone();
+    tab_0.appearance.borrow_mut().background = Some(Background::Color(color::hex("949898")));
+    tab_0.layout.borrow_mut().margin = geometry::Spacing{top: 4.0, left: 20.0, right: 4.0, bottom: 0.0};
     let tab_0 = scene_graph.add_child(tab_bar, Box::new(tab_0));
 
     let tab_1 = scene_graph.add_child(tab_bar, Box::new(tab.clone()));

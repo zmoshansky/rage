@@ -1,3 +1,5 @@
+#![feature(rc_counts)]
+
 extern crate piston_window;
 extern crate piston;
 extern crate graphics;
@@ -60,13 +62,15 @@ fn main() {
     let (mut scene_graph, _) = SceneGraph::new();
     test_fixture::web_browser(&mut scene_graph);
 
-    // First Layout
-    layout::layout_root(&mut Cartographer{window: &window_size, glyphs: &mut glyph_cache, images: &mut image_cache, dpi: &geometry::Xy{x:96.0, y: 96.0}}, &scene_graph);
     for e in window {
 
         if let Some(button) = e.press_args() {
             if button == Button::Mouse(MouseButton::Left) {
                 collision::press(&scene_graph);
+            }
+            // DEBUG
+            if button == Button::Mouse(MouseButton::Right) {
+                scene_graph.debug_print_ref_counts();
             }
         };
         if let Some(button) = e.release_args() {
@@ -109,13 +113,8 @@ fn main() {
         };
 
         e.update(|_| {
-            // TODO - Add Flag to note when style has changed.
             style::style(&scene_graph);
-            if scene_graph.needs_layout.get() {
-                layout::layout_root(&mut Cartographer{window: &window_size, glyphs: &mut glyph_cache, images: &mut image_cache, dpi: &geometry::Xy{x:96.0, y: 96.0}}, &scene_graph);
-                scene_graph.needs_layout.set(false);
-            }
-            // println!("Update");
+            layout::layout_root(&mut Cartographer{window: &window_size, glyphs: &mut glyph_cache, images: &mut image_cache, dpi: &geometry::Xy{x:96.0, y: 96.0}}, &scene_graph);
         });
 
         e.draw_2d(|c, g| {

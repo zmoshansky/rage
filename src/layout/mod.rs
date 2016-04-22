@@ -11,6 +11,8 @@ pub mod box_model;
 #[allow(dead_code)]
 pub mod spacing;
 
+use std::rc::Rc;
+
 use rose_tree::{ROOT, NodeIndex};
 use piston_window;
 
@@ -58,11 +60,12 @@ pub struct Layout {
 // A node `a` will have it's geometry set before traversing it's children; except if its dimension is of type `wrap`.
 // TODO - Special case for wrap... Probably need to return width/height of nodes
 /// Layout all of a node's children
-pub fn layout(cartographer: &mut Cartographer, scene_graph: &SceneGraph, parent_index: NodeIndex) {
+fn layout(cartographer: &mut Cartographer, scene_graph: &SceneGraph, parent_index: NodeIndex) {
     // BFS from pet_graph doesn't work since we need to know when we're done traversing a level.
     // The Margin/Border/Padding Pass must be done before Dimensions.
     spacing::calculate(cartographer, scene_graph, parent_index);
     dimension::calculate(cartographer, scene_graph, parent_index);
+
 
     let tree = scene_graph.tree.borrow();
     let parent = &tree[parent_index];
@@ -80,37 +83,49 @@ pub fn layout(cartographer: &mut Cartographer, scene_graph: &SceneGraph, parent_
         x: parent.geometry.borrow().position.x,
         y: parent.geometry.borrow().position.y
     };
+
     // Postion & Recursively lay out children
+    // TODO - Use layout list instead of doing entire tree
     for nx in child_indices.clone() {
-        position_children(&parent, &tree[nx], &mut position);
-        println!("layout::layout {:?} {:?}", tree[nx], tree[nx].geometry.borrow());
+        position_children(&parent, &tree[nx], &mut position, scene_graph);
+        // println!("layout::layout {:?} {:?}", tree[nx], tree[nx].geometry.borrow());
         layout(cartographer, scene_graph, nx);
     }
 }
 
+// TODO - Another layout method that handles only the `scenegraph.layout` nodes,
 pub fn layout_root(cartographer: &mut Cartographer, scene_graph: &SceneGraph) {
-    layout(cartographer, scene_graph, NodeIndex::new(ROOT));
+    if scene_graph.layout_pass_required() {
+        // DEBUG
+        scene_graph.debug_print_layout_nodes();
+
+        layout(cartographer, scene_graph, NodeIndex::new(ROOT));
+
+        // TODO - Eventually use a drain iterator to handle this in `layout`.
+        // See style::style
+        scene_graph.temp_layout_complete();
+    }
 }
 
-fn position_children(parent: &Node, node: &Node, bounding_position: &mut geometry::Xy) {
-    match node.layout.position {
+fn position_children<'a>(parent: &Rc<Node<'a>>, node: &Rc<Node<'a>>, bounding_position: &mut geometry::Xy, scene_graph: &SceneGraph<'a>) {
+    match node.layout.borrow().position {
         position::Position::Relative(ref pos) => {
-            set_position_x(node, parent.geometry.borrow().position.x + pos.x);
-            set_position_y(node, parent.geometry.borrow().position.y + pos.y);
+            set_position_x(node, parent.geometry.borrow().position.x + pos.x, scene_graph);
+            set_position_y(node, parent.geometry.borrow().position.y + pos.y, scene_graph);
         }
         position::Position::Absolute(ref _pos) => {unimplemented!();}
         // TODO - Child cannot override flow yet.
         position::Position::Flow(ref _flow_self) => {
-            match parent.layout.flow.direction {
+            match parent.layout.borrow().flow.direction {
                 flow::Direction::Right => {
-                    set_position_x(node, bounding_position.x);
-                    set_position_y(node, bounding_position.y);
+                    set_position_x(node, bounding_position.x, scene_graph);
+                    set_position_y(node, bounding_position.y, scene_graph);
                     let bounds = node.geometry.borrow().bounding_dimensions();
                     bounding_position.x += bounds.x;
                 }
                 flow::Direction::Down => {
-                    set_position_x(node, bounding_position.x);
-                    set_position_y(node, bounding_position.y);
+                    set_position_x(node, bounding_position.x, scene_graph);
+                    set_position_y(node, bounding_position.y, scene_graph);
                     let bounds = node.geometry.borrow().bounding_dimensions();
                     bounding_position.y += bounds.y;
                 }
@@ -121,16 +136,16 @@ fn position_children(parent: &Node, node: &Node, bounding_position: &mut geometr
     }
 }
 
-fn set_position_x(node: &Node, bounding_pos_x: f64) {
+fn set_position_x<'a>(node: &Rc<Node<'a>>, bounding_pos_x: f64, scene_graph: &SceneGraph<'a>) {
     let mut geometry = node.geometry.borrow_mut();
     if geometry.set_bounding_position_x(bounding_pos_x) {
-        node.dirty.set(true);
+        scene_graph.render(node);
     }
 }
 
-fn set_position_y(node: &Node, bounding_pos_y: f64) {
+fn set_position_y<'a>(node: &Rc<Node<'a>>, bounding_pos_y: f64, scene_graph: &SceneGraph<'a>) {
     let mut geometry = node.geometry.borrow_mut();
     if geometry.set_bounding_position_y(bounding_pos_y) {
-        node.dirty.set(true);
+        scene_graph.render(node);
     }
 }

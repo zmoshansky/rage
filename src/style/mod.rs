@@ -1,4 +1,4 @@
-use rose_tree::{ROOT, petgraph};
+use std::rc::Rc;
 
 use collision;
 use scene_graph::{SceneGraph, node};
@@ -7,11 +7,11 @@ use layout::{self, dimension, position, flow};
 use renderer::geometry;
 
 // These are CSS-esque styles, targeted at some subset of nodes
-pub struct Style {
-    // pub name: Option<&str>,?
-    // pub selector: &str,?
-    pub rules: Vec<Rule>,
-}
+// pub struct Style {
+//     // pub name: Option<&str>,?
+//     // pub selector: &str,?
+//     pub rules: Vec<Rule>,
+// }
 
 /// Obviously we need to group and scope rules... This isn't the wild west.
 // pub struct StyleGroup {
@@ -51,7 +51,7 @@ impl Rule {
 
     pub fn evaluate_condition(&self, node: &node::Node) -> bool {
         if let Some(ref condition) = self.condition {
-            node.state.hover_state == *condition
+            node.state.borrow().hover_state == *condition
         } else {true}
     }
 }
@@ -87,60 +87,74 @@ pub enum LayoutRule {
 }
 
 // TODO - One Pass to handle changing the Node.style_rules
-// pub fn style_list...
+// pub fn generate_rules_from_styles(scene_graph: &SceneGraph) {
 
-// Seperate pass to update the generated styles depending on if any conditional rules may have changed
-// TODO - Optimize so only nodes with conditional styles are updated
-// TODO - Optimize so only updated styles are re-computed...(in `style_list`)
+/// Applies a style pass to any nodes that need it.
 pub fn style(scene_graph: &SceneGraph) {
-    let mut tree = scene_graph.tree.borrow_mut();
+    if scene_graph.style_pass_required() {
+        let styles = &mut scene_graph.style_nodes().borrow_mut();
+        let iter = styles.drain(..);
+        for weak in iter {
+            if let Some(node) = weak.upgrade() {
+                style_node(&node, scene_graph);
+            }
+        }
+    }
+}
 
-    let mut dfs = petgraph::Dfs::new(tree.graph(), petgraph::graph::NodeIndex::new(ROOT));
-    while let Some(node_index) = dfs.next(tree.graph()) {
-        let node = &mut tree[node_index];
+/// Queues a node for a style pass if it has a conditional rule
+pub fn maybe_style<'a>(node: &Rc<node::Node<'a>>, scene_graph: &SceneGraph<'a>) {
+    if node.style_rules.iter().any(|rule| {
+        rule.condition.is_some()
+    }) {
+        scene_graph.style(node);
+    }
+}
 
-        // Temporary condition
-        if !node.style_rules.is_empty() {
+/// Takes the list of style_rules on a node and generates the appearance/layout.
+fn style_node<'a>(node: &Rc<node::Node<'a>>, scene_graph: &SceneGraph<'a>) {
+    // Temporary condition
+    if !node.style_rules.is_empty() {
 
-            // We create and re-evaluate so that defaults can be observed with conditional rules.
-            let mut appearance = appearance::Appearance::default();
-            let mut layout = layout::Layout::default();
+        // We create and re-evaluate so that defaults can be observed with conditional rules.
+        let mut appearance = appearance::Appearance::default();
+        let mut layout = layout::Layout::default();
 
-            // TODO - Ensure a conditioned rule overrides a non-conditioned rule if the condition evaluates to true
 
-            for rule in &node.style_rules {
-                if rule.evaluate_condition(node) {
-                    // println!("Evaluated Style Rules {:?}", appearance);
-                    // println!("Evaluated Style Rules {:?}", layout);
-                    match rule.effect {
-                        RuleType::Appearance(ref appearance_rule) => {
-                            match appearance_rule {
-                                &AppearanceRule::Background(ref background) => {appearance.background = Some(background.clone());},
-                                &AppearanceRule::Border(ref border) => {appearance.border = Some(border.clone());},
-                                &AppearanceRule::Font(ref font) => {appearance.font = Some(font.clone());},
-                            }
-                        },
-                        RuleType::Layout(ref layout_rule) => {
-                            match layout_rule {
-                                &LayoutRule::Margin(ref margin) => {layout.margin = margin.clone();},
-                                &LayoutRule::Border(ref border) => {layout.border = border.clone();},
-                                &LayoutRule::Padding(ref padding) => {layout.padding = padding.clone();},
-                                &LayoutRule::Dimensions(ref dimensions) => {layout.dimensions = dimensions.clone();},
-                                &LayoutRule::Position(ref position) => {layout.position = position.clone();},
-                                &LayoutRule::Flow(ref flow) => {layout.flow = flow.clone();},
-                            }
-                        },
-                    }
+        // TODO - Ensure a conditioned rule overrides a non-conditioned rule if the condition evaluates to true
+        // TODO - Document Rule Heirarchy somewhere
+        for rule in &node.style_rules {
+            if rule.evaluate_condition(&*node) {
+                // println!("Evaluated Style Rules {:?}", appearance);
+                // println!("Evaluated Style Rules {:?}", layout);
+                match rule.effect {
+                    RuleType::Appearance(ref appearance_rule) => {
+                        match appearance_rule {
+                            &AppearanceRule::Background(ref background) => {appearance.background = Some(background.clone());},
+                            &AppearanceRule::Border(ref border) => {appearance.border = Some(border.clone());},
+                            &AppearanceRule::Font(ref font) => {appearance.font = Some(font.clone());},
+                        }
+                    },
+                    RuleType::Layout(ref layout_rule) => {
+                        match layout_rule {
+                            &LayoutRule::Margin(ref margin) => {layout.margin = margin.clone();},
+                            &LayoutRule::Border(ref border) => {layout.border = border.clone();},
+                            &LayoutRule::Padding(ref padding) => {layout.padding = padding.clone();},
+                            &LayoutRule::Dimensions(ref dimensions) => {layout.dimensions = dimensions.clone();},
+                            &LayoutRule::Position(ref position) => {layout.position = position.clone();},
+                            &LayoutRule::Flow(ref flow) => {layout.flow = flow.clone();},
+                        }
+                    },
                 }
             }
-            if node.layout != layout {
-                node.layout = layout;
-                scene_graph.needs_layout.set(true);
-            }
-            if node.appearance != appearance {
-                node.appearance = appearance;
-                node.dirty.set(true);
-            }
+        }
+        if *node.layout.borrow() != layout {
+            *node.layout.borrow_mut() = layout;
+            scene_graph.layout(node);
+        }
+        if *node.appearance.borrow() != appearance {
+            *node.appearance.borrow_mut() = appearance;
+            scene_graph.render(node);
         }
     }
 }
