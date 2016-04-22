@@ -6,7 +6,7 @@ use layout::dimension::{self, Dimension};
 use renderer::geometry;
 use scene_graph::node::Node;
 use scene_graph::SceneGraph;
-use widget::{text, image};
+use widget::{self, text, image};
 use appearance::background;
 use appearance::background::Background;
 use appearance::color;
@@ -14,7 +14,7 @@ use appearance::font::Font;
 use style::{Rule, AppearanceRule, LayoutRule};
 use style::RuleType::{Appearance, Layout};
 use collision;
-
+use event;
 
 // https://www.google.com/design/spec/style/color.html#color-color-palette
 pub fn web_browser(scene_graph: &mut SceneGraph) {
@@ -43,7 +43,7 @@ pub fn web_browser(scene_graph: &mut SceneGraph) {
     }));
 }
 
-fn tabs(scene_graph: &mut SceneGraph, container: rose_tree::NodeIndex) {
+fn tabs<'a>(scene_graph: &mut SceneGraph<'a>, container: rose_tree::NodeIndex) {
     // Tab Bar
     let tab_bar = scene_graph.add_child(container, Box::new(Node{
         style_rules: vec![
@@ -130,6 +130,12 @@ fn tabs(scene_graph: &mut SceneGraph, container: rose_tree::NodeIndex) {
             Rule::new_with_condition(collision::HoverState::Hover, Appearance(AppearanceRule::Background(background::Background::Color([1.0, 0.0, 0.0, 1.0])))),
         ],
         widget: Box::new(image::Image{path: "assets/icons/close.png"}),
+        event_handlers: vec![
+            event::EventHandler{
+                event: event::EventType::Pressed,
+                callback: tapped,
+            }
+        ],
         ..Default::default()
     };
 
@@ -226,4 +232,8 @@ fn address_bar(scene_graph: &mut SceneGraph, container: rose_tree::NodeIndex) {
         widget: Box::new(image::Image{path: "assets/icons/left_arrow.png"}),
         ..Default::default()
     }));
+}
+
+fn tapped(state: &widget::State) -> () {
+    println!("Tapped {:?}", state);
 }

@@ -4,9 +4,22 @@ use style;
 use scene_graph::{SceneGraph, node};
 use rose_tree::{ROOT, petgraph};
 use renderer::geometry::{Xy, Geometry};
+use event;
 
 pub struct CollisionArgs<'a> {
     pub cursor: &'a Xy,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum HoverState {
+    Up,
+    Hover,
+    Down,
+    Drag
+}
+
+impl Default for HoverState {
+    fn default() -> HoverState {HoverState::Up}
 }
 
 // Keep a quick list of absolutely positioned nodes. Then DFS/BFS search can be used on the `UiTree` and exited early as a bounding box heirarchy.
@@ -30,15 +43,18 @@ pub fn collision(args: &CollisionArgs, scene_graph: &SceneGraph) {
         if over && node.id != 0 {
             if let HoverState::Up = hover_state {
                 set_state(node, HoverState::Hover, scene_graph);
-                println!("Hovered {:?}", node);
+                event::emit_events(node, event::EventType::Hovering);
             }
         } else {
             match hover_state {
                 HoverState::Hover => {
                     set_state(node, HoverState::Up, scene_graph);
+                    event::emit_events(node, event::EventType::Hovered);
                 }
                 HoverState::Down => {
                     set_state(node, HoverState::Drag, scene_graph);
+                    event::emit_events(node, event::EventType::Dragging);
+
                 }
                 _ => {}
             }
@@ -60,6 +76,8 @@ pub fn press(scene_graph: &SceneGraph) {
         let hover_state = node.state.borrow().hover_state.clone();
         if let HoverState::Hover = hover_state {
             set_state(node, HoverState::Down, scene_graph);
+            event::emit_events(node, event::EventType::Pressing);
+
         }
     }
 }
@@ -79,7 +97,7 @@ pub fn release(args: &CollisionArgs, scene_graph: &SceneGraph) {
         match hover_state {
             HoverState::Down => {
                 set_state(node, HoverState::Hover, scene_graph);
-                println!("Tapped {:?}", node);
+                event::emit_events(node, event::EventType::Pressed);
             }
             HoverState::Drag => {
                 // https://github.com/rust-lang/rfcs/issues/811
@@ -90,32 +108,15 @@ pub fn release(args: &CollisionArgs, scene_graph: &SceneGraph) {
                 else {
                     set_state(node, HoverState::Up, scene_graph);
                 }
-                println!("Dragged {:?}", node);
+                event::emit_events(node, event::EventType::Dragged);
             }
             _ => {}
         }
     }
 }
-
-// pub fn hovering(state: &HoverState) -> bool {
-//     *state == HoverState::Hover || *state == HoverState::Down
-// }
-
 fn cursor_over(geometry: &Geometry, cursor: &Xy) -> bool {geometry.within_border_box(cursor)}
 
 fn set_state<'a>(node: &Rc<node::Node<'a>>, state: HoverState, scene_graph: &SceneGraph<'a>) {
     node.state.borrow_mut().hover_state = state;
     style::maybe_style(node, scene_graph);
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum HoverState {
-    Up,
-    Hover,
-    Down,
-    Drag
-}
-
-impl Default for HoverState {
-    fn default() -> HoverState {HoverState::Up}
 }

@@ -14,6 +14,7 @@ use sdl2_window::Sdl2Window;
 
 mod scene_graph;
 mod style;
+mod event;
 mod widget;
 mod renderer;
 mod appearance;

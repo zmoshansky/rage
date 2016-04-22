@@ -14,6 +14,7 @@ use appearance::background::Background;
 // #[derive(Default)]
 pub struct SceneGraph<'a> {
     pub id_counter: u32,
+    // TODO - Keep track of an x,y offset for rendering, to allow multiple scene_graphs at once
 
     /// TODO - Enforce these conditions
     /// A tree of nodes, where a parent fully contains it's children, except those on absolute list below
