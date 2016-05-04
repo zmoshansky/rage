@@ -23,18 +23,13 @@ impl Default for CollisionState {
 }
 
 // Keep a quick list of absolutely positioned nodes. Then DFS/BFS search can be used on the `UiTree` and exited early as a bounding box heirarchy.
-// On mouse button down - All hover nodes set to down.
-// On mouse release - All [down|drag] nodes emit event.
-// Assumes mouse move always happens before press/release.
 pub fn collision(args: &CollisionArgs, scene_graph: &SceneGraph) {
+    // OPTIMIZATION - Store a List of absolutely positioned nodes, then collision only need check those and do a DFS, skipping branches as soon as a `node.is_hover() == false`
     let tree = scene_graph.tree.borrow();
 
     let mut dfs = petgraph::Dfs::new(tree.graph(), petgraph::graph::NodeIndex::new(ROOT));
     while let Some(node_index) = dfs.next(tree.graph()) {
         let node: &Rc<node::Node> = &tree[node_index];
-
-        // OPTIMIZATION - Store a List of absolutely positioned nodes, then collision only need check those and do a DFS, skipping branches as soon as a `node.is_hover() == false`
-        // OPTIMIZATION - `scene_graph.cursor_over: WeakRef<Nodes>` of `hover_state != CollisionState::Up` for press and drag events.
 
         // TODO - Is there a better fix?
         // https://github.com/rust-lang/rfcs/issues/811
@@ -45,78 +40,100 @@ pub fn collision(args: &CollisionArgs, scene_graph: &SceneGraph) {
                 set_state(node, CollisionState::Hover, scene_graph);
                 event::emit_events(node, event::EventType::Hovering);
             }
-        } else {
-            match hover_state {
-                CollisionState::Hover => {
-                    set_state(node, CollisionState::Up, scene_graph);
-                    event::emit_events(node, event::EventType::Hovered);
-                }
-                CollisionState::Down => {
-                    set_state(node, CollisionState::Drag, scene_graph);
-                    event::emit_events(node, event::EventType::Dragging);
-
-                }
-                _ => {}
-            }
         }
     }
+
+    // https://github.com/rust-lang/rfcs/issues/811
+    let hovering = &mut scene_graph.hover_nodes().borrow_mut();
+    hovering.retain(|weak|
+        if let Some(ref node) = weak.upgrade() {
+            let over = cursor_over(&node.geometry.borrow(), args.cursor);
+            if over {
+                true
+            } else {
+                set_state(node, CollisionState::Up, scene_graph);
+                event::emit_events(node, event::EventType::Hovered);
+                false
+            }
+        } else {
+            false
+        }
+    );
+
+    // https://github.com/rust-lang/rfcs/issues/811
+    let down = &mut scene_graph.down_nodes().borrow_mut();
+    down.retain(|weak|
+        if let Some(ref node) = weak.upgrade() {
+            let over = cursor_over(&node.geometry.borrow(), args.cursor);
+            if over {
+                true
+            } else {
+                set_state(node, CollisionState::Drag, scene_graph);
+                event::emit_events(node, event::EventType::Dragging);
+                false
+            }
+        } else {
+            false
+        }
+    );
 }
 
 /// On press - All `CollisionState::Hover` nodes set to down.
 pub fn press(scene_graph: &SceneGraph) {
-    let tree = scene_graph.tree.borrow();
-
-    // OPTIMIZATION - `scene_graph.cursor_over: WeakRef<Nodes>` of `hover_state != CollisionState::Up` for press and drag events.
-    let mut dfs = petgraph::Dfs::new(tree.graph(), petgraph::graph::NodeIndex::new(ROOT));
-    while let Some(node_index) = dfs.next(tree.graph()) {
-        let node = &tree[node_index];
-
-        // TODO - Is there a better fix?
-        // https://github.com/rust-lang/rfcs/issues/811
-        let hover_state = node.state.borrow().hover_state.clone();
-        if let CollisionState::Hover = hover_state {
+    // https://github.com/rust-lang/rfcs/issues/811
+    let hovering = &mut scene_graph.hover_nodes().borrow_mut();
+    let iter = hovering.drain(..);
+    for weak in iter {
+        if let Some(ref node) = weak.upgrade() {
             set_state(node, CollisionState::Down, scene_graph);
             event::emit_events(node, event::EventType::Pressing);
-
         }
     }
 }
 
 /// On press - All `CollisionState::Hover` nodes set to down.
 pub fn release(args: &CollisionArgs, scene_graph: &SceneGraph) {
-    let tree = scene_graph.tree.borrow();
-
-    // OPTIMIZATION - `scene_graph.cursor_over: WeakRef<Nodes>` of `hover_state != CollisionState::Up` for press and drag events.
-    let mut dfs = petgraph::Dfs::new(tree.graph(), petgraph::graph::NodeIndex::new(ROOT));
-    while let Some(node_index) = dfs.next(tree.graph()) {
-        let node = &tree[node_index];
-
-        // TODO - Is there a better fix?
-        // https://github.com/rust-lang/rfcs/issues/811
-        let hover_state = node.state.borrow().hover_state.clone();
-        match hover_state {
-            CollisionState::Down => {
+    // https://github.com/rust-lang/rfcs/issues/811
+    let drag = &mut scene_graph.drag_nodes().borrow_mut();
+    let iter = drag.drain(..);
+    for weak in iter {
+        if let Some(ref node) = weak.upgrade() {
+            // https://github.com/rust-lang/rfcs/issues/811
+            let over = cursor_over(&node.geometry.borrow(), args.cursor);
+            if over {
                 set_state(node, CollisionState::Hover, scene_graph);
-                event::emit_events(node, event::EventType::Pressed);
+                event::emit_events(node, event::EventType::Hovering);
             }
-            CollisionState::Drag => {
-                // https://github.com/rust-lang/rfcs/issues/811
-                let over = cursor_over(&node.geometry.borrow(), args.cursor);
-                if over {
-                    set_state(node, CollisionState::Hover, scene_graph);
-                }
-                else {
-                    set_state(node, CollisionState::Up, scene_graph);
-                }
-                event::emit_events(node, event::EventType::Dragged);
+            else {
+                set_state(node, CollisionState::Up, scene_graph);
             }
-            _ => {}
+            event::emit_events(node, event::EventType::Dragged);
+        }
+    }
+
+    // https://github.com/rust-lang/rfcs/issues/811
+    let down = &mut scene_graph.down_nodes().borrow_mut();
+    let iter = down.drain(..);
+    for weak in iter {
+        if let Some(ref node) = weak.upgrade() {
+            set_state(node, CollisionState::Hover, scene_graph);
+            event::emit_events(node, event::EventType::Pressed);
+
+            // TODO - Improve this, limit to only input nodes, otherwise none.
+            scene_graph.focus(node);
         }
     }
 }
+
 fn cursor_over(geometry: &Geometry, cursor: &Xy) -> bool {geometry.within_border_box(cursor)}
 
 fn set_state<'a>(node: &Rc<node::Node<'a>>, state: CollisionState, scene_graph: &SceneGraph<'a>) {
+    match state {
+        CollisionState::Hover => scene_graph.hover(node),
+        CollisionState::Down => scene_graph.down(node),
+        CollisionState::Drag => scene_graph.drag(node),
+        _ => {},
+    }
     node.state.borrow_mut().hover_state = state;
     style::maybe_style(node, scene_graph);
 }

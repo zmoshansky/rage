@@ -71,7 +71,7 @@ fn main() {
             }
             // DEBUG
             if button == Button::Mouse(MouseButton::Right) {
-                scene_graph.debug_print_ref_counts();
+                debug(&scene_graph);
             }
         };
         if let Some(button) = e.release_args() {
@@ -91,15 +91,19 @@ fn main() {
         // Only works properly in SDL2
         if let Some(cursor) = e.cursor_args() {
             if cursor { println!("Mouse entered"); }
-            else { println!("Mouse left"); }
+            else {
+                println!("Mouse left");
+                debug(&scene_graph);
+            }
         };
 
         e.mouse_scroll(|dx, dy| println!("Scrolled mouse '{}, {}'", dx, dy));
         e.text(|text| println!("Typed '{}'", text));
         e.resize(|w, h| {
+            println!("Resized '{}, {}'", w, h);
             window_size = geometry::Xy{x: w as f64, y: h as f64};
+            scene_graph.layout_root();
             layout::layout_root(&mut Cartographer{window: &window_size, glyphs: &mut glyph_cache, images: &mut image_cache, dpi: &geometry::Xy{x:96.0, y: 96.0}}, &scene_graph);
-            println!("Resized '{}, {}'", w, h)
         });
 
         // Focus is gained/lost consecutively if alt-tab is used.
@@ -124,5 +128,13 @@ fn main() {
 
         // Only works with SDL2 Window
         // e.mouse_relative(|dx, dy| println!("Relative mouse moved '{} {}'", dx, dy));
+    }
+}
+
+fn debug(scene_graph: &SceneGraph) {
+    scene_graph.debug_print_ref_counts();
+    let mut focused = scene_graph.focused.borrow_mut();
+    if let Some(weak) = focused.as_mut() {
+        println!("{:?}", weak.upgrade());
     }
 }

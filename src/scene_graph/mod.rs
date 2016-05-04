@@ -26,8 +26,14 @@ pub struct SceneGraph<'a> {
     layout: RefCell<Vec<Weak<Node<'a>>>>,
     render: RefCell<Vec<Weak<Node<'a>>>>,
     style: RefCell<Vec<Weak<Node<'a>>>>,
+
+    hover: RefCell<Vec<Weak<Node<'a>>>>,
+    drag: RefCell<Vec<Weak<Node<'a>>>>,
+    down: RefCell<Vec<Weak<Node<'a>>>>,
     // absolute: RefCell<Vec<Weak<Node<'a>>>>,
-    // hover: RefCell<Vec<Weak<Node<'a>>>>,
+
+    // TODO - Make private?
+    pub focused: RefCell<Option<Weak<Node<'a>>>>,
 }
 
 impl<'a> SceneGraph<'a> {
@@ -46,6 +52,12 @@ impl<'a> SceneGraph<'a> {
             layout: RefCell::new(Vec::new()),
             render: RefCell::new(Vec::new()),
             style: RefCell::new(Vec::new()),
+
+            hover: RefCell::new(Vec::new()),
+            drag: RefCell::new(Vec::new()),
+            down: RefCell::new(Vec::new()),
+
+            focused: RefCell::new(None),
         }, root)
     }
     pub fn add_child(&mut self, root: NodeIndex, node: Box<Node<'a>>) -> NodeIndex {
@@ -63,6 +75,35 @@ impl<'a> SceneGraph<'a> {
         self.add_child(NodeIndex::new(ROOT), node)
     }
 
+    // Collision Handling
+    pub fn focus(&self, node: &Rc<Node<'a>>) {
+        let mut focused = self.focused.borrow_mut();
+        *focused = Some(Rc::downgrade(node));
+    }
+    pub fn hover(&self, node: &Rc<Node<'a>>) {
+        self.hover.borrow_mut().push(Rc::downgrade(node));
+    }
+    pub fn hover_nodes(&self) -> &RefCell<Vec<Weak<Node<'a>>>> {
+        &self.hover
+    }
+    pub fn drag(&self, node: &Rc<Node<'a>>) {
+        self.drag.borrow_mut().push(Rc::downgrade(node));
+    }
+    pub fn drag_nodes(&self) -> &RefCell<Vec<Weak<Node<'a>>>> {
+        &self.drag
+    }
+    pub fn down(&self, node: &Rc<Node<'a>>) {
+        self.down.borrow_mut().push(Rc::downgrade(node));
+    }
+    pub fn down_nodes(&self) -> &RefCell<Vec<Weak<Node<'a>>>> {
+        &self.down
+    }
+
+    // Rendering
+    /// Layout the entire scene graph
+    pub fn layout_root(&self) {
+        self.layout.borrow_mut().push(Rc::downgrade(&self.tree.borrow()[NodeIndex::new(ROOT)]));
+    }
     pub fn layout(&self, node: &Rc<Node<'a>>) {
         self.layout.borrow_mut().push(Rc::downgrade(node));
     }
