@@ -87,7 +87,7 @@ fn main() {
             collision::collision(&CollisionArgs{cursor: &cursor}, &scene_graph);
         });
 
-        // Only occurs if mouse button down while leaving window frame... HoverState::Drag.
+        // Only occurs if mouse button down while leaving window frame... CollisionState::Drag.
         // Only works properly in SDL2
         if let Some(cursor) = e.cursor_args() {
             if cursor { println!("Mouse entered"); }

@@ -6,13 +6,13 @@ use renderer::Renderer;
 use renderer::geometry;
 use layout;
 use appearance;
-use collision::HoverState;
+use collision::CollisionState;
 use std::fmt::Debug;
 
 #[derive(Default, Clone, Debug)]
 pub struct State<'a> {
     pub id: &'a str,
-    pub hover_state: HoverState,
+    pub hover_state: CollisionState,
 }
 
 

@@ -91,7 +91,7 @@ fn tabs<'a>(scene_graph: &mut SceneGraph<'a>, container: rose_tree::NodeIndex) {
             Rule::new(Layout(LayoutRule::Dimensions(dimension::Dimensions{x: Dimension::Wrap, y: Dimension::Wrap}))),
 
             // For now, conditional rules must come after others
-            Rule::new_with_condition(collision::HoverState::Hover, Appearance(AppearanceRule::Background(background::Background::Color(color::hex("949898"))))),
+            Rule::new_with_condition(collision::CollisionState::Hover, Appearance(AppearanceRule::Background(background::Background::Color(color::hex("949898"))))),
         ],
         widget: Box::new(image::Image{path: "assets/icons/plus.png"}),
         ..Default::default()
@@ -120,6 +120,7 @@ fn tabs<'a>(scene_graph: &mut SceneGraph<'a>, container: rose_tree::NodeIndex) {
         ..Default::default()
     };
 
+    let func = tapped;
     let tab_close = Node{
         style_rules: vec![
             Rule::new(Layout(LayoutRule::Dimensions(dimension::Dimensions{x: Dimension::Wrap, y: Dimension::Wrap}))),
@@ -127,13 +128,13 @@ fn tabs<'a>(scene_graph: &mut SceneGraph<'a>, container: rose_tree::NodeIndex) {
             Rule::new(Layout(LayoutRule::Padding(geometry::Spacing{top: 4.0, left: 4.0, bottom: 4.0, right: 4.0}))),
 
             // For now, conditional rules must come after others
-            Rule::new_with_condition(collision::HoverState::Hover, Appearance(AppearanceRule::Background(background::Background::Color([1.0, 0.0, 0.0, 1.0])))),
+            Rule::new_with_condition(collision::CollisionState::Hover, Appearance(AppearanceRule::Background(background::Background::Color([1.0, 0.0, 0.0, 1.0])))),
         ],
         widget: Box::new(image::Image{path: "assets/icons/close.png"}),
         event_handlers: vec![
             event::EventHandler{
                 event: event::EventType::Pressed,
-                callback: tapped,
+                callback: func,
             }
         ],
         ..Default::default()
@@ -184,8 +185,8 @@ fn address_bar(scene_graph: &mut SceneGraph, container: rose_tree::NodeIndex) {
                 }))
             ),
 
-            Rule::new_with_condition(collision::HoverState::Hover, Layout(LayoutRule::Border(geometry::Spacing{left: 2.0, top: 2.0, right: 2.0, bottom: 2.0, ..Default::default()}))),
-            Rule::new_with_condition(collision::HoverState::Hover, Appearance(AppearanceRule::Border(color::hex("2196F3")))),
+            Rule::new_with_condition(collision::CollisionState::Hover, Layout(LayoutRule::Border(geometry::Spacing{left: 2.0, top: 2.0, right: 2.0, bottom: 2.0, ..Default::default()}))),
+            Rule::new_with_condition(collision::CollisionState::Hover, Appearance(AppearanceRule::Border(color::hex("2196F3")))),
         ],
         widget: Box::new(text::Text{text: "https://start.fedoraproject.org"}),
         ..Default::default()
@@ -205,8 +206,8 @@ fn address_bar(scene_graph: &mut SceneGraph, container: rose_tree::NodeIndex) {
                 }))
             ),
 
-            Rule::new_with_condition(collision::HoverState::Hover, Layout(LayoutRule::Border(geometry::Spacing{left: 2.0, top: 2.0, right: 2.0, bottom: 2.0, ..Default::default()}))),
-            Rule::new_with_condition(collision::HoverState::Hover, Appearance(AppearanceRule::Border(color::hex("2196F3")))),
+            Rule::new_with_condition(collision::CollisionState::Hover, Layout(LayoutRule::Border(geometry::Spacing{left: 2.0, top: 2.0, right: 2.0, bottom: 2.0, ..Default::default()}))),
+            Rule::new_with_condition(collision::CollisionState::Hover, Appearance(AppearanceRule::Border(color::hex("2196F3")))),
         ],
         widget: Box::new(text::Text{text: "Search"}),
         ..Default::default()

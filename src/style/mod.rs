@@ -31,7 +31,7 @@ use renderer::geometry;
 // Styles will use this as a basic building block, but also Nodes.
 #[derive(Clone, Debug)]
 pub struct Rule {
-    pub condition: Option<collision::HoverState>,
+    pub condition: Option<collision::CollisionState>,
     pub effect: RuleType,
 }
 impl Rule {
@@ -42,7 +42,7 @@ impl Rule {
         }
     }
 
-    pub fn new_with_condition(condition: collision::HoverState, effect: RuleType) -> Rule {
+    pub fn new_with_condition(condition: collision::CollisionState, effect: RuleType) -> Rule {
         Rule{
             condition: Some(condition),
             effect: effect,

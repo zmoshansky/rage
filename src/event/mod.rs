@@ -6,6 +6,7 @@ pub struct EventHandler {
     pub event: EventType,
     pub callback: fn(&widget::State) -> (),
 }
+
 // https://stackoverflow.com/questions/33454425/how-to-clone-a-function-pointer
 impl Clone for EventHandler {
     fn clone(&self) -> Self {
